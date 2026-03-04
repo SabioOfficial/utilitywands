@@ -1,0 +1,6 @@
+{
+  "parent": "item/handheld",
+  "textures": {
+    "layer0": "utilitywands:item/magnet_wand"
+  }
+}

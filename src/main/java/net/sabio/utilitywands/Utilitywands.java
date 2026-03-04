@@ -1,6 +1,7 @@
 package net.sabio.utilitywands;
 
 import net.fabricmc.api.ModInitializer;
+import net.sabio.utilitywands.item.MagnetPullManager;
 import net.sabio.utilitywands.item.ModItems;
 
 import java.util.logging.Logger;
@@ -11,6 +12,7 @@ public class Utilitywands implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        ModItems.register();
+        ModItems.initialize();
+        MagnetPullManager.initialize();
     }
 }
