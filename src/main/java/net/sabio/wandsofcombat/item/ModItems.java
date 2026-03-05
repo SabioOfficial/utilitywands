@@ -24,19 +24,31 @@ public class ModItems {
             new MagnetWandItem(new Item.Settings().registryKey(MAGNET_WAND_KEY))
     );
 
-    public static final RegistryKey<ItemGroup> UTILITY_WANDS_GROUP_KEY = RegistryKey.of(
-            RegistryKeys.ITEM_GROUP,
-            Identifier.of(Wandsofcombat.MOD_ID, "utility_wands")
+    public static final RegistryKey<Item> ICE_WAND_KEY = RegistryKey.of(
+            RegistryKeys.ITEM,
+            Identifier.of(Wandsofcombat.MOD_ID, "ice_wand")
     );
 
-    public static final ItemGroup UTILITY_WANDS_GROUP = Registry.register(
+    public static final IceWandItem ICE_WAND = Registry.register(
+            Registries.ITEM,
+            ICE_WAND_KEY,
+            new IceWandItem(new Item.Settings().registryKey(ICE_WAND_KEY))
+    );
+
+    public static final RegistryKey<ItemGroup> WANDS_OF_COMBAT_GROUP_KEY = RegistryKey.of(
+            RegistryKeys.ITEM_GROUP,
+            Identifier.of(Wandsofcombat.MOD_ID, "wands_of_combat")
+    );
+
+    public static final ItemGroup WANDS_OF_COMBAT_GROUP = Registry.register(
             Registries.ITEM_GROUP,
-            UTILITY_WANDS_GROUP_KEY,
+            WANDS_OF_COMBAT_GROUP_KEY,
             FabricItemGroup.builder()
                     .displayName(Text.translatable("itemGroup.wandsofcombat"))
                     .icon(() -> new ItemStack(MAGNET_WAND))
                     .entries((displayContext, entries) -> {
                         entries.add(MAGNET_WAND);
+                        entries.add(ICE_WAND);
                     })
                     .build()
     );

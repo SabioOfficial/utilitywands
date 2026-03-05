@@ -1,6 +1,9 @@
 {
   "item.wandsofcombat.magnet_wand": "Magnet Wand",
-  "itemGroup.wandsofcombat": "Utility Wands",
+  "item.wandsofcombat.ice_wand": "Ice Wand",
+  "itemGroup.wandsofcombat": "Wands of Combat",
   "advancement.wandsofcombat.magnetic_superpower.title": "Magnetic Superpower",
-  "advancement.wandsofcombat.magnetic_superpower.description": "It fills you with a sense of magnets. You read that right."
+  "advancement.wandsofcombat.magnetic_superpower.description": "Magneti-fying!",
+  "advancement.wandsofcombat.frozen_in_time.title": "Frozen In Time",
+  "advancement.wandsofcombat.frozen_in_time.description": "Obtain blue ice from the coldest of places."
 }

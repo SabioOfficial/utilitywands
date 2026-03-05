@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " BB",
+    " |B",
+    "S  "
+  ],
+  "key": {
+    "B": "minecraft:blue_ice",
+    "S": "minecraft:stick",
+    "|": "minecraft:breeze_rod"
+  },
+  "result": {
+    "id": "wandsofcombat:ice_wand",
+    "count": 1
+  }
+}

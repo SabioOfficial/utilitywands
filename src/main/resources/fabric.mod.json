@@ -21,7 +21,7 @@
     ]
   },
   "mixins": [
-    "Wandsofcombat.mixins.json"
+    "wandsofcombat.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=${loader_version}",

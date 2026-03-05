@@ -1,0 +1,32 @@
+{
+  "display": {
+    "icon": {
+      "id": "wandsofcombat:ice_wand"
+    },
+    "title": {
+      "translate": "advancement.wandsofcombat.frozen_in_time.title"
+    },
+    "description": {
+      "translate": "advancement.wandsofcombat.frozen_in_time.description"
+    }
+  },
+  "parent": "minecraft:story/iron_tools",
+  "criteria": {
+    "has_blue_ice": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {"items": "minecraft:blue_ice"}
+        ]
+      }
+    }
+  },
+  "requirements": [
+    ["has_blue_ice"]
+  ],
+  "rewards": {
+    "recipes": [
+      "wandsofcombat:ice_wand"
+    ]
+  }
+}

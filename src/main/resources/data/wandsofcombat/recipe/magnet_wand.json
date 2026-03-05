@@ -1,9 +1,9 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    " I ",
+    "  I",
     " S ",
-    " S "
+    "S  "
   ],
   "key": {
     "I": "minecraft:iron_block",
