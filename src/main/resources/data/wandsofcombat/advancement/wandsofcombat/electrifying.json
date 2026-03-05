@@ -1,0 +1,32 @@
+{
+  "display": {
+    "icon": {
+      "id": "wandsofcombat:electric_wand"
+    },
+    "title": {
+      "translate": "advancement.wandsofcombat.elctrifying.title"
+    },
+    "description": {
+      "translate": "advancement.wandsofcombat.elctrifying.description"
+    }
+  },
+  "parent": "minecraft:story/iron_tools",
+  "criteria": {
+    "has_lightning_rod": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {"items": "minecraft:lightning_rod"}
+        ]
+      }
+    }
+  },
+  "requirements": [
+    ["has_lightning_rod"]
+  ],
+  "rewards": {
+    "recipes": [
+      "wandsofcombat:electric_wand"
+    ]
+  }
+}

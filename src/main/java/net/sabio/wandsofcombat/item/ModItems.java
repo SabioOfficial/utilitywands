@@ -35,6 +35,17 @@ public class ModItems {
             new IceWandItem(new Item.Settings().registryKey(ICE_WAND_KEY))
     );
 
+    public static final RegistryKey<Item> ELECTRIC_WAND_KEY = RegistryKey.of(
+            RegistryKeys.ITEM,
+            Identifier.of(Wandsofcombat.MOD_ID, "electric_wand")
+    );
+
+    public static final ElectricWandItem ELECTRIC_WAND = Registry.register(
+            Registries.ITEM,
+            ELECTRIC_WAND_KEY,
+            new ElectricWandItem(new Item.Settings().registryKey(ELECTRIC_WAND_KEY))
+    );
+
     public static final RegistryKey<ItemGroup> WANDS_OF_COMBAT_GROUP_KEY = RegistryKey.of(
             RegistryKeys.ITEM_GROUP,
             Identifier.of(Wandsofcombat.MOD_ID, "wands_of_combat")
@@ -49,6 +60,7 @@ public class ModItems {
                     .entries((displayContext, entries) -> {
                         entries.add(MAGNET_WAND);
                         entries.add(ICE_WAND);
+                        entries.add(ELECTRIC_WAND);
                     })
                     .build()
     );

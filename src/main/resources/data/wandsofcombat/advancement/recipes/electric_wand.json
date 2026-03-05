@@ -1,0 +1,21 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_copper_block": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {"items": "minecraft:copper_block"}
+        ]
+      }
+    }
+  },
+  "requirements": [
+    ["has_copper_block"]
+  ],
+  "rewards": {
+    "recipes": [
+      "wandsofcombat:electric_wand"
+    ]
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " CL",
+    " SC",
+    "S  "
+  ],
+  "key": {
+    "C": "minecraft:copper_block",
+    "S": "minecraft:stick",
+    "L": "minecraft:lightning_rod"
+  },
+  "result": {
+    "id": "wandsofcombat:electric_wand",
+    "count": 1
+  }
+}
