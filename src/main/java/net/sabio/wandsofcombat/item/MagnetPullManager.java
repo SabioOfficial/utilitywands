@@ -1,4 +1,4 @@
-package net.sabio.utilitywands.item;
+package net.sabio.wandsofcombat.item;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.entity.Entity;

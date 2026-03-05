@@ -1,7 +1,7 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "net.sabio.utilitywands.mixin",
+  "package": "net.sabio.wandsofcombat.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
   ],

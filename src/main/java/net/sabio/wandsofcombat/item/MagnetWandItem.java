@@ -1,6 +1,5 @@
-package net.sabio.utilitywands.item;
+package net.sabio.wandsofcombat.item;
 
-import net.minecraft.component.type.AttributeModifiersComponent;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ExperienceOrbEntity;
 import net.minecraft.entity.ItemEntity;

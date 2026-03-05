@@ -1,27 +1,27 @@
 {
   "schemaVersion": 1,
-  "id": "utilitywands",
+  "id": "wandsofcombat",
   "version": "${version}",
-  "name": "Utilitywands",
+  "name": "wandsofcombat",
   "description": "Utility-based wands!",
   "authors": [],
   "contact": {},
   "license": "GPL-3.0",
-  "icon": "assets/utilitywands/icon.png",
+  "icon": "assets/wandsofcombat/icon.png",
   "environment": "*",
   "entrypoints": {
     "fabric-datagen": [
-      "net.sabio.utilitywands.client.UtilitywandsDataGenerator"
+      "net.sabio.wandsofcombat.client.WandsofcombatDataGenerator"
     ],
     "client": [
-      "net.sabio.utilitywands.client.UtilitywandsClient"
+      "net.sabio.wandsofcombat.client.WandsofcombatClient"
     ],
     "main": [
-      "net.sabio.utilitywands.Utilitywands"
+      "net.sabio.wandsofcombat.Wandsofcombat"
     ]
   },
   "mixins": [
-    "utilitywands.mixins.json"
+    "Wandsofcombat.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=${loader_version}",
