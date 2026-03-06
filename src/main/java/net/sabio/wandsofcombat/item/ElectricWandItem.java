@@ -28,7 +28,7 @@ public class ElectricWandItem extends Item {
     private static final double ABILITY_RANGE_SMALL = 10.0;
     private static final int LIGHTNING_BURST_COUNT = 5;
     private static final int LIGHTNING_FOLLOWUP_COUNT = 7;
-    private static final float FOLLOWUP_DAMAGE_THRESHOLD = 6.0f; // if combined damage from the 5 initial strikes is less than 3 hearts (6 hp), trigger a follow-up attack
+    private static final float FOLLOWUP_DAMAGE_THRESHOLD = 3f; // if combined damage from the 5 initial strikes is less than 1.5 hearts (3 hp), trigger a follow-up attack
     private static final int STRIKE_INTERVAL = 10; // ticks between each lightning strike
     private static final Map<UUID, Integer> hitCounters = new HashMap<>();
 
