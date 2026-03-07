@@ -10,7 +10,7 @@
       "translate": "advancement.wandsofcombat.electrifying.description"
     }
   },
-  "parent": "minecraft:story/iron_tools",
+  "parent": "wandsofcombat:wandsofcombat/root",
   "criteria": {
     "has_lightning_rod": {
       "trigger": "minecraft:inventory_changed",

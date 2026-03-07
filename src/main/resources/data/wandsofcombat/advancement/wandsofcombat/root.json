@@ -1,0 +1,21 @@
+{
+  "display": {
+    "icon": {
+      "id": "wandsofcombat:magnet_wand"
+    },
+    "title": {
+      "translate": "advancement.wandsofcombat.root.title"
+    },
+    "description": {
+      "translate": "advancement.wandsofcombat.root.description"
+    },
+    "background": "minecraft:block/blackstone",
+    "show_toast": false,
+    "announce_to_chat": false
+  },
+  "criteria": {
+    "tick": {
+      "trigger": "minecraft:tick"
+    }
+  }
+}

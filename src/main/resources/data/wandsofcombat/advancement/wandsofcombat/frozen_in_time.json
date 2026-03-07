@@ -10,7 +10,7 @@
       "translate": "advancement.wandsofcombat.frozen_in_time.description"
     }
   },
-  "parent": "minecraft:story/iron_tools",
+  "parent": "wandsofcombat:wandsofcombat/root",
   "criteria": {
     "has_blue_ice": {
       "trigger": "minecraft:inventory_changed",

@@ -10,7 +10,7 @@
       "translate": "advancement.wandsofcombat.ghostly_powers.description"
     }
   },
-  "parent": "minecraft:story/iron_tools",
+  "parent": "wandsofcombat:wandsofcombat/root",
   "criteria": {
     "has_phantom_wand": {
       "trigger": "minecraft:inventory_changed",

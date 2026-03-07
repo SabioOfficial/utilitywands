@@ -11,5 +11,7 @@
   "advancement.wandsofcombat.electrifying.title": "Electrifying!",
   "advancement.wandsofcombat.electrifying.description": "Obtain a copper lightning rod. The Lightning are awaiting your command.",
   "advancement.wandsofcombat.ghostly_powers.title": "Ghostly Powers",
-  "advancement.wandsofcombat.ghostly_powers.description": "Obtain the phantom wand. Fly and haunt at your will."
+  "advancement.wandsofcombat.ghostly_powers.description": "Obtain the phantom wand. Fly and haunt at your will.",
+  "advancement.wandsofcombat.root.title": "Wands of Combat",
+  "advancement.wandsofcombat.root.description": "Your magical journey begins here!"
 }
