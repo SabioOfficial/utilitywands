@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "wandsofcombat:ice_wand",
+    "wandsofcombat:electric_wand",
+    "wandsofcombat:phantom_wand"
+  ]
+}
