@@ -72,6 +72,7 @@ public class ModItems {
                         entries.add(MAGNET_WAND);
                         entries.add(ICE_WAND);
                         entries.add(ELECTRIC_WAND);
+                        entries.add(PHANTOM_WAND);
                     })
                     .build()
     );

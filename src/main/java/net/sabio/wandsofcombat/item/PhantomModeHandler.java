@@ -23,6 +23,8 @@ import java.util.*;
 public class PhantomModeHandler {
     private static final Map<UUID, Long> phantomEndTimes = new HashMap<>();
     private static final Map<UUID, Long> pullImmunityEndTimes = new HashMap<>();
+    private static final Map<UUID, StatusEffectInstance> savedInvisibility = new HashMap<>();
+    private static final Map<UUID, StatusEffectInstance> savedNightVision = new HashMap<>();
     private static final Set<UUID> applyingReducedDamage = new HashSet<>();
     private static final int PHANTOM_DURATION = 200; // 10 seconds
     private static final double PULL_RANGE = 5.0;
@@ -31,6 +33,18 @@ public class PhantomModeHandler {
     private static final int PULL_IMMUNITY_DURATION = 10; // immune for 10 ticks after pull
     private static final Identifier REACH_MODIFIER_ID = Identifier.of(Wandsofcombat.MOD_ID, "phantom_wand_reach");
     private static void applyPhantomEffects(PlayerEntity player) {
+        StatusEffectInstance existingInvisibility = player.getStatusEffect(StatusEffects.INVISIBILITY);
+        StatusEffectInstance existingNightVision = player.getStatusEffect(StatusEffects.NIGHT_VISION);
+        if (existingInvisibility != null) {
+            savedInvisibility.put(player.getUuid(), new StatusEffectInstance(existingInvisibility));
+        } else {
+            savedInvisibility.remove(player.getUuid());
+        }
+        if (existingNightVision != null) {
+            savedNightVision.put(player.getUuid(), new StatusEffectInstance(existingNightVision));
+        } else {
+            savedNightVision.remove(player.getUuid());
+        }
         player.addStatusEffect(new StatusEffectInstance(
                 StatusEffects.INVISIBILITY,
                 PHANTOM_DURATION,
@@ -49,15 +63,24 @@ public class PhantomModeHandler {
         ));
     }
     private static void removePhantomEffects(PlayerEntity player) {
+        UUID uuid = player.getUuid();
         player.removeStatusEffect(StatusEffects.INVISIBILITY);
         player.removeStatusEffect(StatusEffects.NIGHT_VISION);
+        StatusEffectInstance savedInvis = savedInvisibility.remove(uuid);
+        StatusEffectInstance savedNV = savedNightVision.remove(uuid);
+        if (savedInvis != null) {
+            player.addStatusEffect(savedInvis);
+        }
+        if (savedNV != null) {
+            player.addStatusEffect(savedNV);
+        }
         if (!player.isCreative() && !player.isSpectator()) {
             player.getAbilities().flying = false;
             player.getAbilities().allowFlying = false;
             player.sendAbilitiesUpdate();
         }
         player.noClip = false;
-        PhantomWandItem.phantomPlayers.remove(player.getUuid());
+        PhantomWandItem.phantomPlayers.remove(uuid);
         if (player instanceof ServerPlayerEntity serverPlayer) {
             ServerPlayNetworking.send(serverPlayer, new PhantomSyncPacket(false));
         }
@@ -124,6 +147,8 @@ public class PhantomModeHandler {
             PhantomWandItem.pullingPlayers.remove(uuid);
             phantomEndTimes.remove(uuid);
             pullImmunityEndTimes.remove(uuid);
+            savedInvisibility.remove(uuid);
+            savedNightVision.remove(uuid);
             handler.player.noClip = false;
             if (!handler.player.isCreative() && !handler.player.isSpectator()) {
                 handler.player.getAbilities().allowFlying = false;
