@@ -4,6 +4,7 @@ import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.fabricmc.loader.impl.lib.sat4j.core.Vec;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
 import net.minecraft.entity.attribute.EntityAttributes;
@@ -32,6 +33,23 @@ public class PhantomModeHandler {
     private static final double PULL_SPEED = 1.2;
     private static final int PULL_IMMUNITY_DURATION = 10; // immune for 10 ticks after pull
     private static final Identifier REACH_MODIFIER_ID = Identifier.of(Wandsofcombat.MOD_ID, "phantom_wand_reach");
+    private static class PullProgress {
+        final ServerPlayerEntity attacker;
+        final LivingEntity target;
+        final Vec3d startPos;
+        final Vec3d endPos;
+        int totalTicks;
+        int ticksElapsed;
+        PullProgress(ServerPlayerEntity attacker, LivingEntity target, Vec3d startPos, Vec3d endPos, int totalTicks) {
+            this.attacker = attacker;
+            this.target = target;
+            this.startPos = startPos;
+            this.endPos = endPos;
+            this.totalTicks = totalTicks;
+            this.ticksElapsed = 0;
+        }
+    }
+    private static final Map<UUID, PullProgress> activePulls = new HashMap<>();
     private static void applyPhantomEffects(PlayerEntity player) {
         StatusEffectInstance existingInvisibility = player.getStatusEffect(StatusEffects.INVISIBILITY);
         StatusEffectInstance existingNightVision = player.getStatusEffect(StatusEffects.NIGHT_VISION);
@@ -118,6 +136,36 @@ public class PhantomModeHandler {
                     player.sendAbilitiesUpdate();
                 }
             }
+            List<UUID> finishedPulls = new ArrayList<>();
+            for (Map.Entry<UUID, PullProgress> entry : activePulls.entrySet()) {
+                PullProgress pull = entry.getValue();
+                pull.ticksElapsed++;
+                if (pull.attacker.isRemoved() || pull.target.isRemoved()) {
+                    finishedPulls.add(entry.getKey());
+                    continue;
+                }
+                float t = (float) pull.ticksElapsed / pull.totalTicks;
+                t = Math.min(t, 1.0f);
+                double x = pull.startPos.x + (pull.endPos.x - pull.startPos.x) * t;
+                double y = pull.startPos.y + (pull.endPos.y - pull.startPos.y) * t;
+                double z = pull.startPos.z + (pull.endPos.z - pull.startPos.z) * t;
+                pull.attacker.teleport(
+                        pull.attacker.getEntityWorld(),
+                        x,
+                        y,
+                        z,
+                        java.util.Set.of(),
+                        pull.attacker.getYaw(),
+                        pull.attacker.getPitch(),
+                        false
+                );
+                if (pull.ticksElapsed >= pull.totalTicks) {
+                    pull.attacker.attack(pull.target);
+                    PhantomWandItem.pullingPlayers.remove(entry.getKey());
+                    finishedPulls.add(entry.getKey());
+                }
+            }
+            finishedPulls.forEach(activePulls::remove);
         }
     }
     public static void initialize() {
@@ -149,6 +197,7 @@ public class PhantomModeHandler {
             pullImmunityEndTimes.remove(uuid);
             savedInvisibility.remove(uuid);
             savedNightVision.remove(uuid);
+            activePulls.remove(uuid);
             handler.player.noClip = false;
             if (!handler.player.isCreative() && !handler.player.isSpectator()) {
                 handler.player.getAbilities().allowFlying = false;
@@ -179,25 +228,20 @@ public class PhantomModeHandler {
         if (distance <= MELEE_RANGE || distance > PULL_RANGE) {
             return false;
         }
-        long immunityEnd = ((ServerWorld) attacker.getEntityWorld()).getTime() + PULL_IMMUNITY_DURATION;
+        long immunityEnd = (attacker.getEntityWorld()).getTime() + PULL_IMMUNITY_DURATION + 5;
         pullImmunityEndTimes.put(attacker.getUuid(), immunityEnd);
         PhantomWandItem.pullingPlayers.add(attacker.getUuid());
         Vec3d direction = target.getEntityPos().subtract(attacker.getEntityPos()).normalize();
         double pullDistance = distance - MELEE_RANGE + 0.5;
         Vec3d destination = attacker.getEntityPos().add(direction.multiply(pullDistance));
 
-        attacker.teleport(
-                (ServerWorld) attacker.getEntityWorld(),
-                destination.x,
-                destination.y,
-                destination.z,
-                java.util.Set.of(),
-                attacker.getYaw(),
-                attacker.getPitch(),
-                false
-        );
-        PullAttackScheduler.schedule(attacker, target, ((ServerWorld) attacker.getEntityWorld()).getTime() + 1);
-        PhantomWandItem.pullingPlayers.remove(attacker.getUuid());
+        activePulls.put(attacker.getUuid(), new PullProgress(
+                attacker,
+                target,
+                attacker.getEntityPos(),
+                destination,
+                8
+        ));
         return true;
     }
     public static float modifyOutgoingDamage(PlayerEntity attacker, float originalDamage) {
