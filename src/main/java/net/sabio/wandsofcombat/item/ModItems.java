@@ -46,6 +46,17 @@ public class ModItems {
             new ElectricWandItem(new Item.Settings().registryKey(ELECTRIC_WAND_KEY))
     );
 
+    public static final RegistryKey<Item> PHANTOM_WAND_KEY = RegistryKey.of(
+            RegistryKeys.ITEM,
+            Identifier.of(Wandsofcombat.MOD_ID, "phantom_wand")
+    );
+
+    public static final PhantomWandItem PHANTOM_WAND = Registry.register(
+            Registries.ITEM,
+            PHANTOM_WAND_KEY,
+            new PhantomWandItem(new Item.Settings().registryKey(PHANTOM_WAND_KEY))
+    );
+
     public static final RegistryKey<ItemGroup> WANDS_OF_COMBAT_GROUP_KEY = RegistryKey.of(
             RegistryKeys.ITEM_GROUP,
             Identifier.of(Wandsofcombat.MOD_ID, "wands_of_combat")

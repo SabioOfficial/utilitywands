@@ -2,6 +2,7 @@ package net.sabio.wandsofcombat;
 
 import net.fabricmc.api.ModInitializer;
 import net.sabio.wandsofcombat.item.*;
+import net.sabio.wandsofcombat.network.PhantomSyncPacket;
 
 import java.util.logging.Logger;
 
@@ -16,5 +17,8 @@ public class Wandsofcombat implements ModInitializer {
         ElectricWandLightningHandler.initialize();
         ElectricWandPassiveHandler.initialize();
         LightningStrikeHandler.initialize();
+        PhantomModeHandler.initialize();
+        PullAttackScheduler.initialize();
+        PhantomSyncPacket.initialize();
     }
 }

@@ -14,7 +14,8 @@
       "net.sabio.wandsofcombat.client.WandsofcombatDataGenerator"
     ],
     "client": [
-      "net.sabio.wandsofcombat.client.WandsofcombatClient"
+      "net.sabio.wandsofcombat.client.WandsofcombatClient",
+      "net.sabio.wandsofcombat.client.PhantomSyncClient"
     ],
     "main": [
       "net.sabio.wandsofcombat.Wandsofcombat"

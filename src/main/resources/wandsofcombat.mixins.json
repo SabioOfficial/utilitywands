@@ -4,6 +4,7 @@
   "package": "net.sabio.wandsofcombat.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "PhantomAttackMixin"
   ],
   "client": [
   ],
