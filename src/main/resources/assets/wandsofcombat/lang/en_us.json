@@ -2,11 +2,14 @@
   "item.wandsofcombat.magnet_wand": "Magnet Wand",
   "item.wandsofcombat.ice_wand": "Ice Wand",
   "item.wandsofcombat.electric_wand": "Electric Wand",
+  "item.wandsofcombat.phantom_wand": "Phantom Wand",
   "itemGroup.wandsofcombat": "Wands of Combat",
   "advancement.wandsofcombat.magnetic_superpower.title": "Magnetic Superpower",
   "advancement.wandsofcombat.magnetic_superpower.description": "The power of the North and South pole strikes!",
   "advancement.wandsofcombat.frozen_in_time.title": "Frozen In Time",
   "advancement.wandsofcombat.frozen_in_time.description": "Obtain blue ice from the coldest of places.",
   "advancement.wandsofcombat.electrifying.title": "Electrifying!",
-  "advancement.wandsofcombat.electrifying.description": "Obtain a copper lightning rod. The Lightning are awaiting your command."
+  "advancement.wandsofcombat.electrifying.description": "Obtain a copper lightning rod. The Lightning are awaiting your command.",
+  "advancement.wandsofcombat.ghostly_powers.title": "Ghostly Powers",
+  "advancement.wandsofcombat.ghostly_powers.description": "Obtain the phantom wand. Fly and haunt at your will."
 }

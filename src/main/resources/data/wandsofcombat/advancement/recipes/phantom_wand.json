@@ -1,0 +1,21 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_crying_obsidian": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {"items": "minecraft:crying_obsidian"}
+        ]
+      }
+    }
+  },
+  "requirements": [
+    ["has_crying_obsidian"]
+  ],
+  "rewards": {
+    "recipes": [
+      "wandsofcombat:phantom_wand"
+    ]
+  }
+}

@@ -1,32 +1,32 @@
 {
   "display": {
     "icon": {
-      "id": "wandsofcombat:electric_wand"
+      "id": "wandsofcombat:phantom_wand"
     },
     "title": {
-      "translate": "advancement.wandsofcombat.electrifying.title"
+      "translate": "advancement.wandsofcombat.ghostly_powers.title"
     },
     "description": {
-      "translate": "advancement.wandsofcombat.electrifying.description"
+      "translate": "advancement.wandsofcombat.ghostly_powers.description"
     }
   },
   "parent": "minecraft:story/iron_tools",
   "criteria": {
-    "has_lightning_rod": {
+    "has_phantom_wand": {
       "trigger": "minecraft:inventory_changed",
       "conditions": {
         "items": [
-          {"items": "minecraft:lightning_rod"}
+          {"items": "wandsofcombat:phantom_wand"}
         ]
       }
     }
   },
   "requirements": [
-    ["has_lightning_rod"]
+    ["has_phantom_wand"]
   ],
   "rewards": {
     "recipes": [
-      "wandsofcombat:electric_wand"
+      "wandsofcombat:phantom_wand"
     ]
   }
 }

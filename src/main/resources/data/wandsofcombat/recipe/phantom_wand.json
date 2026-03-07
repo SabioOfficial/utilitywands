@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "  C",
+    " S ",
+    "S  "
+  ],
+  "key": {
+    "C": "minecraft:crying_obsidian",
+    "S": "minecraft:stick"
+  },
+  "result": {
+    "id": "wandsofcombat:phantom_wand",
+    "count": 1
+  }
+}
