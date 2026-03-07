@@ -23,7 +23,7 @@ import java.util.UUID;
 public class ElectricWandItem extends Item {
     public static final int COOLDOWN_DURATION = 600; // 30 seconds
     private static final float ATTACK_DAMAGE_BONUS = 4.0f; // total atk damage: 8
-    private static final float ATTACK_SPEED = -3.259f; // 1.35s charge time
+    private static final float ATTACK_SPEED = -3f;
     private static final double ABILITY_RANGE_LARGE = 16.0;
     private static final double ABILITY_RANGE_SMALL = 10.0;
     private static final int LIGHTNING_BURST_COUNT = 5;

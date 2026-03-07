@@ -26,6 +26,8 @@ public class PhantomModeHandler {
     private static final Map<UUID, Long> pullImmunityEndTimes = new HashMap<>();
     private static final Map<UUID, StatusEffectInstance> savedInvisibility = new HashMap<>();
     private static final Map<UUID, StatusEffectInstance> savedNightVision = new HashMap<>();
+    private static final Map<UUID, StatusEffectInstance> savedSlowness = new HashMap<>();
+    private static final Map<UUID, StatusEffectInstance> savedBlindness = new HashMap<>();
     private static final Set<UUID> applyingReducedDamage = new HashSet<>();
     private static final int PHANTOM_DURATION = 200; // 10 seconds
     private static final double PULL_RANGE = 5.0;
@@ -53,6 +55,8 @@ public class PhantomModeHandler {
     private static void applyPhantomEffects(PlayerEntity player) {
         StatusEffectInstance existingInvisibility = player.getStatusEffect(StatusEffects.INVISIBILITY);
         StatusEffectInstance existingNightVision = player.getStatusEffect(StatusEffects.NIGHT_VISION);
+        StatusEffectInstance existingSlowness = player.getStatusEffect(StatusEffects.SLOWNESS);
+        StatusEffectInstance existingBlindness = player.getStatusEffect(StatusEffects.BLINDNESS);
         if (existingInvisibility != null) {
             savedInvisibility.put(player.getUuid(), new StatusEffectInstance(existingInvisibility));
         } else {
@@ -62,6 +66,16 @@ public class PhantomModeHandler {
             savedNightVision.put(player.getUuid(), new StatusEffectInstance(existingNightVision));
         } else {
             savedNightVision.remove(player.getUuid());
+        }
+        if (existingSlowness != null) {
+            savedSlowness.put(player.getUuid(), new StatusEffectInstance(existingSlowness));
+        } else {
+            savedSlowness.remove(player.getUuid());
+        }
+        if (existingBlindness != null) {
+            savedBlindness.put(player.getUuid(), new StatusEffectInstance(existingBlindness));
+        } else {
+            savedBlindness.remove(player.getUuid());
         }
         player.addStatusEffect(new StatusEffectInstance(
                 StatusEffects.INVISIBILITY,
@@ -79,18 +93,37 @@ public class PhantomModeHandler {
                 false,
                 false
         ));
+        player.addStatusEffect(new StatusEffectInstance(
+                StatusEffects.BLINDNESS,
+                PHANTOM_DURATION,
+                0,
+                false,
+                false,
+                false
+        ));
     }
     private static void removePhantomEffects(PlayerEntity player) {
         UUID uuid = player.getUuid();
         player.removeStatusEffect(StatusEffects.INVISIBILITY);
         player.removeStatusEffect(StatusEffects.NIGHT_VISION);
+        player.removeStatusEffect(StatusEffects.SLOWNESS);
+        player.removeStatusEffect(StatusEffects.BLINDNESS);
+        player.setInvisible(false);
         StatusEffectInstance savedInvis = savedInvisibility.remove(uuid);
         StatusEffectInstance savedNV = savedNightVision.remove(uuid);
+        StatusEffectInstance savedSlow = savedSlowness.remove(uuid);
+        StatusEffectInstance savedBlind = savedBlindness.remove(uuid);
         if (savedInvis != null) {
             player.addStatusEffect(savedInvis);
         }
         if (savedNV != null) {
             player.addStatusEffect(savedNV);
+        }
+        if (savedSlow != null) {
+            player.addStatusEffect(savedSlow);
+        }
+        if (savedBlind != null) {
+            player.addStatusEffect(savedSlow);
         }
         if (!player.isCreative() && !player.isSpectator()) {
             player.getAbilities().flying = false;
@@ -129,12 +162,21 @@ public class PhantomModeHandler {
                     phantomEndTimes.remove(uuid);
                     continue;
                 }
+                player.setInvisible(true);
                 player.noClip = true;
                 if (!player.isCreative() && !player.isSpectator()) {
                     player.getAbilities().allowFlying = true;
                     player.getAbilities().flying = true;
                     player.sendAbilitiesUpdate();
                 }
+                player.addStatusEffect(new StatusEffectInstance(
+                        StatusEffects.SLOWNESS,
+                        2,
+                        5,
+                        false,
+                        false,
+                        false
+                ));
             }
             List<UUID> finishedPulls = new ArrayList<>();
             for (Map.Entry<UUID, PullProgress> entry : activePulls.entrySet()) {
@@ -197,6 +239,8 @@ public class PhantomModeHandler {
             pullImmunityEndTimes.remove(uuid);
             savedInvisibility.remove(uuid);
             savedNightVision.remove(uuid);
+            savedSlowness.remove(uuid);
+            savedBlindness.remove(uuid);
             activePulls.remove(uuid);
             handler.player.noClip = false;
             if (!handler.player.isCreative() && !handler.player.isSpectator()) {
