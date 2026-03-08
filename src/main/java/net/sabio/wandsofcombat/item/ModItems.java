@@ -57,6 +57,17 @@ public class ModItems {
             new PhantomWandItem(new Item.Settings().registryKey(PHANTOM_WAND_KEY))
     );
 
+    public static final RegistryKey<Item> MAGMA_WAND_KEY = RegistryKey.of(
+            RegistryKeys.ITEM,
+            Identifier.of(Wandsofcombat.MOD_ID, "magma_wand")
+    );
+
+    public static final MagmaWandItem MAGMA_WAND = Registry.register(
+            Registries.ITEM,
+            MAGMA_WAND_KEY,
+            new MagmaWandItem(new Item.Settings().registryKey(MAGMA_WAND_KEY))
+    );
+
     public static final RegistryKey<ItemGroup> WANDS_OF_COMBAT_GROUP_KEY = RegistryKey.of(
             RegistryKeys.ITEM_GROUP,
             Identifier.of(Wandsofcombat.MOD_ID, "wands_of_combat")
@@ -73,6 +84,7 @@ public class ModItems {
                         entries.add(ICE_WAND);
                         entries.add(ELECTRIC_WAND);
                         entries.add(PHANTOM_WAND);
+                        entries.add(MAGMA_WAND);
                     })
                     .build()
     );

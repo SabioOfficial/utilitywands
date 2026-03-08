@@ -94,7 +94,7 @@ public class PhantomModeHandler {
                 false
         ));
         player.addStatusEffect(new StatusEffectInstance(
-                StatusEffects.BLINDNESS,
+                StatusEffects.DARKNESS,
                 PHANTOM_DURATION,
                 0,
                 false,

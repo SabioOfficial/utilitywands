@@ -1,0 +1,32 @@
+{
+  "display": {
+    "icon": {
+      "id": "wandsofcombat:magma_wand"
+    },
+    "title": {
+      "translate": "advancement.wandsofcombat.burning_shield.title"
+    },
+    "description": {
+      "translate": "advancement.wandsofcombat.burning_shield.description"
+    }
+  },
+  "parent": "wandsofcombat:wandsofcombat/root",
+  "criteria": {
+    "has_magma_block": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {"items": "minecraft:magma_block"}
+        ]
+      }
+    }
+  },
+  "requirements": [
+    ["has_magma_block"]
+  ],
+  "rewards": {
+    "recipes": [
+      "wandsofcombat:magma_wand"
+    ]
+  }
+}

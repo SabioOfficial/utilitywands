@@ -26,7 +26,7 @@ public class IceWandItem extends Item {
     private static final int LITE_SLOWNESS_AMPLIFIER = 126; // slowness 127
     private static final int FULL_SLOWNESS_AMPLIFIER = 1; // slowness 2
     private static final float ATTACK_SPEED = -3.3f;
-    private static final float ATTACK_DAMAGE_BONUS = 12.0f; // 16 total attack damage
+    private static final float ATTACK_DAMAGE_BONUS = 8.0f; // 12 total attack damage
 
     private boolean applyAbility(World world, PlayerEntity player) {
         boolean hitPlayer = false;

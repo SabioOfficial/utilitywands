@@ -1,0 +1,21 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_magma_block": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {"items": "minecraft:magma_block"}
+        ]
+      }
+    }
+  },
+  "requirements": [
+    ["has_magma_block"]
+  ],
+  "rewards": {
+    "recipes": [
+      "wandsofcombat:magma_wand"
+    ]
+  }
+}
