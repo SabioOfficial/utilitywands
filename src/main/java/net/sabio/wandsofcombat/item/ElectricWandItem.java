@@ -24,12 +24,8 @@ public class ElectricWandItem extends Item {
     public static final int COOLDOWN_DURATION = 600; // 30 seconds
     private static final float ATTACK_DAMAGE_BONUS = 4.0f; // total atk damage: 8
     private static final float ATTACK_SPEED = -3f;
-    private static final double ABILITY_RANGE_LARGE = 16.0;
-    private static final double ABILITY_RANGE_SMALL = 10.0;
-    private static final int LIGHTNING_BURST_COUNT = 5;
-    private static final int LIGHTNING_FOLLOWUP_COUNT = 7;
-    private static final float FOLLOWUP_DAMAGE_THRESHOLD = 3f; // if combined damage from the 5 initial strikes is less than 1.5 hearts (3 hp), trigger a follow-up attack
-    private static final int STRIKE_INTERVAL = 10; // ticks between each lightning strike
+    private static final double ABILITY_RANGE = 16.0;
+    private static final int LIGHTNING_COUNT = 3;
     private static final Map<UUID, Integer> hitCounters = new HashMap<>();
 
     public ElectricWandItem(Settings settings) {
@@ -47,21 +43,19 @@ public class ElectricWandItem extends Item {
         lightning.setPosition(target.getX(), target.getY(), target.getZ());
         lightning.setCosmetic(true);
         world.spawnEntity(lightning);
-        if (target instanceof LivingEntity livingEntity) {
-            livingEntity.damage(world, world.getDamageSources().lightningBolt(), 5.0f);
-        }
+        target.damage(world, world.getDamageSources().lightningBolt(), 5.0f);
     }
 
     @Override
     public void postHit(ItemStack stack, LivingEntity target, LivingEntity attacker) {
         if (attacker instanceof PlayerEntity player && !attacker.getEntityWorld().isClient()) {
-            UUID playerId = player.getUuid();
-            int hits = hitCounters.getOrDefault(playerId, 0) + 1;
+            UUID uuid = player.getUuid();
+            int hits = hitCounters.getOrDefault(uuid, 0) + 1;
             if (hits >= 3) {
-                hitCounters.put(playerId, 0);
+                hitCounters.put(uuid, 0);
                 strikeLightningOn(target, (ServerWorld) attacker.getEntityWorld());
             } else {
-                hitCounters.put(playerId, hits);
+                hitCounters.put(uuid, hits);
             }
         }
         super.postHit(stack, target, attacker);
@@ -70,30 +64,15 @@ public class ElectricWandItem extends Item {
     @Override
     public ActionResult use(World world, PlayerEntity player, Hand hand) {
         ItemStack stack = player.getStackInHand(hand);
-        if (player.getItemCooldownManager().isCoolingDown(stack)) {
-            return ActionResult.FAIL;
-        }
+        if (player.getItemCooldownManager().isCoolingDown(stack)) return ActionResult.FAIL;
         if (!world.isClient()) {
             ServerWorld serverWorld = (ServerWorld) world;
             player.getItemCooldownManager().set(stack, COOLDOWN_DURATION);
-            Box largeBox = player.getBoundingBox().expand(ABILITY_RANGE_LARGE);
-            List<LivingEntity> targets = world.getEntitiesByClass(LivingEntity.class, largeBox, entity -> entity != player && !entity.isRemoved());
-            if (targets.isEmpty()) return ActionResult.SUCCESS;
-            Map<LivingEntity, Float> healthBefore = new HashMap<>();
-            for (LivingEntity target : targets) {
-                healthBefore.put(target, target.getHealth());
+            Box box = player.getBoundingBox().expand(ABILITY_RANGE);
+            List<LivingEntity> targets = world.getEntitiesByClass(LivingEntity.class, box, entity -> entity != player && !entity.isRemoved());
+            if (!targets.isEmpty()) {
+                ElectricWandLightningHandler.scheduleAbility(serverWorld, player, targets, LIGHTNING_COUNT);
             }
-            ElectricWandLightningHandler.scheduleBurst(
-                    serverWorld,
-                    player,
-                    targets,
-                    healthBefore,
-                    LIGHTNING_BURST_COUNT,
-                    LIGHTNING_FOLLOWUP_COUNT,
-                    FOLLOWUP_DAMAGE_THRESHOLD,
-                    ABILITY_RANGE_SMALL,
-                    STRIKE_INTERVAL
-            );
         }
         return ActionResult.SUCCESS;
     }
