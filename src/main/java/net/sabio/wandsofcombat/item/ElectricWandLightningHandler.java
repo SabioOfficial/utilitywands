@@ -18,7 +18,7 @@ public class ElectricWandLightningHandler {
     private static final Map<UUID, UUID> summonedSkeletons = new HashMap<>();
     private static final Map<UUID, Long> skeletonDespawnTimes = new HashMap<>();
     private static final Map<UUID, Long> stunnedEntities = new HashMap<>();
-    private static final int STUN_DURATION = 30; // 0.4 seconds
+    private static final int STUN_DURATION = 30; // 1.5 seconds
     private static final int SKELETON_LIFETIME = 160; // 8 seconds
     private static void spawnSkeleton(ServerWorld world, PlayerEntity summoner, LivingEntity target, long currentTick) {
         SkeletonEntity skeleton = new SkeletonEntity(EntityType.SKELETON, world);

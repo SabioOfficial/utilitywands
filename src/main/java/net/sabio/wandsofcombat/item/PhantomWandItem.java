@@ -16,7 +16,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public class PhantomWandItem extends Item {
-    public static final int ABILITY_DURATION = 200; // 10 seconds
+    public static final int ABILITY_DURATION = 120; // 6 seconds
     public static final int ABILITY_COOLDOWN = 1200 + ABILITY_DURATION; // 1 minute
     private static final float ATTACK_DAMAGE_BONUS = 2.0f; // 6 total attack damage
     private static final float ATTACK_SPEED = -1.5f;
