@@ -94,17 +94,8 @@ public class IceWandItem extends Item {
 
     @Override
     public void postHit(ItemStack stack, LivingEntity target, LivingEntity attacker) {
-        if (target instanceof PlayerEntity && attacker instanceof PlayerEntity attackerPlayer) {
-            if (attackerPlayer.getAttackCooldownProgress(0.5f) >= 1.0f) {
-                target.addStatusEffect(new StatusEffectInstance(
-                        StatusEffects.SLOWNESS,
-                        20 * 2,
-                        2,
-                        false,
-                        true,
-                        true
-                ));
-            }
+        if (attacker instanceof PlayerEntity player && !attacker.getEntityWorld().isClient()) {
+            IceWandComboHandler.onHit(player, target);
         }
         super.postHit(stack, target, attacker);
     }
