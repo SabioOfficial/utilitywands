@@ -1,7 +1,7 @@
 {
   "display": {
     "icon": {
-      "id": "wandsofcombat:magnet_wand"
+      "id": "wandsofcombat:magical_stick"
     },
     "title": {
       "translate": "advancement.wandsofcombat.root.title"
@@ -9,13 +9,14 @@
     "description": {
       "translate": "advancement.wandsofcombat.root.description"
     },
-    "background": "minecraft:block/blackstone",
-    "show_toast": false,
-    "announce_to_chat": false
+    "background": "minecraft:block/blackstone"
   },
   "criteria": {
-    "tick": {
-      "trigger": "minecraft:tick"
+    "has_magical_stick": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [{"items": "wandsofcombat:magical_stick"}]
+      }
     }
   }
 }

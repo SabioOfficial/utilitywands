@@ -4,6 +4,7 @@
   "item.wandsofcombat.electric_wand": "Electric Wand",
   "item.wandsofcombat.phantom_wand": "Phantom Wand",
   "item.wandsofcombat.magma_wand": "Magma Wand",
+  "item.wandsofcombat.magical_stick": "Magical Stick",
   "itemGroup.wandsofcombat": "Wands of Combat",
   "advancement.wandsofcombat.magnetic_superpower.title": "Magnetic Superpower",
   "advancement.wandsofcombat.magnetic_superpower.description": "The power of the North and South pole strikes!",
@@ -13,6 +14,6 @@
   "advancement.wandsofcombat.electrifying.description": "Obtain a copper lightning rod. The Lightning are awaiting your command.",
   "advancement.wandsofcombat.ghostly_powers.title": "Ghostly Powers",
   "advancement.wandsofcombat.ghostly_powers.description": "Obtain the phantom wand. Fly and haunt at your will.",
-  "advancement.wandsofcombat.root.title": "Wands of Combat",
-  "advancement.wandsofcombat.root.description": "Your magical journey begins here!"
+  "advancement.wandsofcombat.root.title": "Magical!",
+  "advancement.wandsofcombat.root.description": "The powerful force rests on your hand..."
 }

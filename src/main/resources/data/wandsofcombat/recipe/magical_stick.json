@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " / ",
+    "DOD",
+    " / "
+  ],
+  "key": {
+    "/": "minecraft:stick",
+    "D": "minecraft:diamond",
+    "O": "minecraft:obsidian"
+  },
+  "result": {
+    "id": "wandsofcombat:magical_stick",
+    "count": 1
+  }
+}

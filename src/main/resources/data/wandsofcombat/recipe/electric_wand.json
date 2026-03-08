@@ -7,7 +7,7 @@
   ],
   "key": {
     "C": "minecraft:copper_block",
-    "S": "minecraft:stick",
+    "S": "wandsofcombat:magical_stick",
     "L": "minecraft:lightning_rod"
   },
   "result": {

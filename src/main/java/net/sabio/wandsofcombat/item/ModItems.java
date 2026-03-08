@@ -68,6 +68,17 @@ public class ModItems {
             new MagmaWandItem(new Item.Settings().registryKey(MAGMA_WAND_KEY))
     );
 
+    public static final RegistryKey<Item> MAGICAL_STICK_KEY = RegistryKey.of(
+            RegistryKeys.ITEM,
+            Identifier.of(Wandsofcombat.MOD_ID, "magical_stick")
+    );
+
+    public static final Item MAGICAL_STICK = Registry.register(
+            Registries.ITEM,
+            MAGICAL_STICK_KEY,
+            new Item(new Item.Settings().registryKey(MAGICAL_STICK_KEY))
+    );
+
     public static final RegistryKey<ItemGroup> WANDS_OF_COMBAT_GROUP_KEY = RegistryKey.of(
             RegistryKeys.ITEM_GROUP,
             Identifier.of(Wandsofcombat.MOD_ID, "wands_of_combat")
@@ -80,6 +91,7 @@ public class ModItems {
                     .displayName(Text.translatable("itemGroup.wandsofcombat"))
                     .icon(() -> new ItemStack(MAGNET_WAND))
                     .entries((displayContext, entries) -> {
+                        entries.add(MAGICAL_STICK);
                         entries.add(MAGNET_WAND);
                         entries.add(ICE_WAND);
                         entries.add(ELECTRIC_WAND);
