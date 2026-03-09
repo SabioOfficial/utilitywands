@@ -15,5 +15,6 @@
   "advancement.wandsofcombat.ghostly_powers.title": "Ghostly Powers",
   "advancement.wandsofcombat.ghostly_powers.description": "Obtain the phantom wand. Fly and haunt at your will.",
   "advancement.wandsofcombat.root.title": "Magical!",
-  "advancement.wandsofcombat.root.description": "The powerful force rests on your hand..."
+  "advancement.wandsofcombat.root.description": "The powerful force rests on your hand...",
+  "key.wandsofcombat.toggle_repel": "Toggle Alternate Ability"
 }
