@@ -10,6 +10,8 @@ import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.particle.DustParticleEffect;
+import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -46,16 +48,56 @@ public class MagmaWandHandler {
             }
             away = away.normalize();
             entity.takeKnockback(
-                    3.0,
+                    1.5,
                     -away.x,
                     -away.z
             );
-            entity.addVelocity(0, 0.6, 0);
+            entity.addVelocity(0, 0.3, 0);
             entity.velocityDirty = true;
             if (entity instanceof ServerPlayerEntity serverTarget) {
                 serverTarget.networkHandler.sendPacket(new net.minecraft.network.packet.s2c.play.EntityVelocityUpdateS2CPacket(serverTarget));
             }
         }
+        for (int i = 0; i < 40; i++) {
+            double angle = world.getRandom().nextDouble() * 2 * Math.PI;
+            double distance = world.getRandom().nextDouble() * KNOCKBACK_RADIUS;
+            double posX = player.getX() + distance * Math.cos(angle);
+            double posY = player.getY() + world.getRandom().nextDouble() * 2.5;
+            double posZ = player.getZ() + distance * Math.sin(angle);
+            world.spawnParticles(
+                    new DustParticleEffect(0xF7803D, 2.5f),
+                    posX,
+                    posY,
+                    posZ,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0
+            );
+        }
+        world.spawnParticles(
+                ParticleTypes.LAVA,
+                player.getX(),
+                player.getY() + 1.0,
+                player.getZ(),
+                20,
+                0.8,
+                0.5,
+                0.8,
+                0.3
+        );
+        world.spawnParticles(
+                ParticleTypes.LARGE_SMOKE,
+                player.getX(),
+                player.getY() + 1.0,
+                player.getZ(),
+                10,
+                0.5,
+                0.4,
+                0.5,
+                0.05
+        );
     }
     private static void applyPassiveBuffs(PlayerEntity player) {
         player.addStatusEffect(new StatusEffectInstance(
