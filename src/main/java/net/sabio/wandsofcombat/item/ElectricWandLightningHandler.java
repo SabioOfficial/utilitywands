@@ -88,17 +88,6 @@ public class ElectricWandLightningHandler {
         for (ServerWorld world : server.getWorlds()) {
             long currentTick = world.getTime();
             pendingBursts.removeIf(burst -> burst.tick(currentTick));
-            stunnedEntities.entrySet().removeIf(entry -> currentTick >= entry.getValue());
-            if (!stunnedEntities.isEmpty()) {
-                world.iterateEntities().forEach(entity -> {
-                    if (!(entity instanceof MobEntity mob)) return;
-                    if (!stunnedEntities.containsKey(mob.getUuid())) return;
-                    mob.setAiDisabled(true);
-                    mob.setAttacking(false);
-                    mob.setVelocity(0, mob.getVelocity().y, 0);
-                    mob.velocityDirty = true;
-                });
-            }
             stunnedEntities.entrySet().removeIf(entry -> {
                 if (currentTick >= entry.getValue()) {
                     world.iterateEntities().forEach(entity -> {
@@ -108,6 +97,14 @@ public class ElectricWandLightningHandler {
                     });
                     return true;
                 }
+                world.iterateEntities().forEach(entity -> {
+                    if (!(entity instanceof MobEntity mob)) return;
+                    if (!stunnedEntities.containsKey(mob.getUuid())) return;
+                    mob.setAiDisabled(true);
+                    mob.setAttacking(false);
+                    mob.setVelocity(0, mob.getVelocity().y, 0);
+                    mob.velocityDirty = true;
+                });
                 return false;
             });
             List<UUID> toRemove = Collections.synchronizedList(new ArrayList<>());
