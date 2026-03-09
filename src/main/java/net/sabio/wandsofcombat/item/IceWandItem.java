@@ -1,5 +1,6 @@
 package net.sabio.wandsofcombat.item;
 
+import net.minecraft.block.Blocks;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
@@ -7,7 +8,9 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ToolMaterial;
+import net.minecraft.particle.*;
 import net.minecraft.registry.tag.BlockTags;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.Box;
@@ -44,6 +47,42 @@ public class IceWandItem extends Item {
             ));
             mob.setVelocity(Vec3d.ZERO);
             mob.velocityDirty = true;
+
+            if (world instanceof ServerWorld serverWorld) {
+                serverWorld.spawnParticles(
+                        ParticleTypes.SNOWFLAKE,
+                        mob.getX(),
+                        mob.getY() + 1.0,
+                        mob.getZ(),
+                        20,
+                        0.4,
+                        0.6,
+                        0.4,
+                        0.05
+                );
+                serverWorld.spawnParticles(
+                        new BlockStateParticleEffect(ParticleTypes.BLOCK, Blocks.PACKED_ICE.getDefaultState()),
+                        mob.getX(),
+                        mob.getY() + 0.5,
+                        mob.getZ(),
+                        15,
+                        0.4,
+                        0.4,
+                        0.4,
+                        0.1
+                );
+                serverWorld.spawnParticles(
+                        new DustParticleEffect(0x80D9FF, 2.0f),
+                        mob.getX(),
+                        mob.getY() + 1.0,
+                        mob.getZ(),
+                        10,
+                        0.3,
+                        0.5,
+                        0.3,
+                        0
+                );
+            }
         }
         Box playerBox = player.getBoundingBox().expand(FULL_RANGE);
         List<PlayerEntity> nearbyPlayers = world.getEntitiesByClass(
@@ -62,6 +101,61 @@ public class IceWandItem extends Item {
             ));
             target.setFrozenTicks(POWDER_SNOW_FREEZE_DURATION);
             hitPlayer = true;
+            if (world instanceof ServerWorld serverWorld) {
+                serverWorld.spawnParticles(
+                        ParticleTypes.SNOWFLAKE,
+                        target.getX(),
+                        target.getY() + 1.0,
+                        target.getZ(),
+                        20,
+                        0.4,
+                        0.6,
+                        0.4,
+                        0.05
+                );
+                serverWorld.spawnParticles(
+                        new DustParticleEffect(0x80D9FF, 2.0f),
+                        target.getX(),
+                        target.getY() + 1.0,
+                        target.getZ(),
+                        10,
+                        0.3,
+                        0.5,
+                        0.3,
+                        0
+                );
+            }
+        }
+
+        if (world instanceof ServerWorld serverWorld) {
+            for (int i = 0; i < 24; i++) {
+                double angle = (2.0 * Math.PI / 24) * i;
+                double range = hitPlayer ? FULL_RANGE : LITE_RANGE;
+                double posX = player.getX() + range * Math.cos(angle);
+                double posZ = player.getZ() + range * Math.sin(range);
+                serverWorld.spawnParticles(
+                        new DustParticleEffect(0x80D9FF, 1.5f),
+                        posX,
+                        player.getY() + 0.5,
+                        posZ,
+                        2,
+                        0,
+                        0.3,
+                        0,
+                        0
+                );
+                serverWorld.spawnParticles(
+                        ParticleTypes.SNOWFLAKE,
+                        posX,
+                        player.getY() + 0.5,
+                        posZ,
+                        1,
+                        0,
+                        0.2,
+                        0,
+                        0.01
+                );
+            }
         }
 
         return hitPlayer;
