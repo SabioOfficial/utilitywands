@@ -161,6 +161,35 @@ public class MagmaWandHandler {
             ));
             passiveAbsorptionGiven.put(uuid, 4.0f);
             absorptionGrantedAt.put(uuid, currentTick);
+            if (player.getEntityWorld() instanceof ServerWorld serverWorld) {
+                for (int i = 0; i < 16; i++) {
+                    double angle = (2.0 * Math.PI / 16) * i;
+                    double posX = player.getX() + 1.0 * Math.cos(angle);
+                    double posZ = player.getZ() + 1.0 * Math.sin(angle);
+                    serverWorld.spawnParticles(
+                            new DustParticleEffect(0xAB421C, 1.8f),
+                            posX,
+                            player.getY() + 1.0,
+                            posZ,
+                            1,
+                            0,
+                            0.2,
+                            0,
+                            0
+                    );
+                }
+                serverWorld.spawnParticles(
+                        ParticleTypes.FLAME,
+                        player.getX(),
+                        player.getY() + 1.0,
+                        player.getZ(),
+                        12,
+                        0.3,
+                        0.4,
+                        0.3,
+                        0.05
+                );
+            }
         } else {
             absorptionGrantTick.remove(uuid);
         }
@@ -355,6 +384,30 @@ public class MagmaWandHandler {
                     if (player.isOnFire() && player.getFireTicks() > 0) {
                         player.heal(0.1f);
                         player.setFireTicks(0);
+                        if (currentTick % 5 == 0) {
+                            world.spawnParticles(
+                                    new DustParticleEffect(0xED541C, 1.5f),
+                                    player.getX(),
+                                    player.getY() + 1.0,
+                                    player.getZ(),
+                                    6,
+                                    0.3,
+                                    0.4,
+                                    0.3,
+                                    0
+                            );
+                            world.spawnParticles(
+                                    ParticleTypes.FLAME,
+                                    player.getX(),
+                                    player.getY() + 0.5,
+                                    player.getZ(),
+                                    4,
+                                    0.2,
+                                    0.3,
+                                    0.2,
+                                    0.02
+                            );
+                        }
                     }
                 }
                 Long ultimateEnd = ultimateEndTimes.get(uuid);

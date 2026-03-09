@@ -3,6 +3,8 @@ package net.sabio.wandsofcombat.item;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.projectile.FireballEntity;
+import net.minecraft.particle.DustParticleEffect;
+import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.Vec3d;
@@ -27,6 +29,39 @@ public class MagmaWandFireballEntity extends FireballEntity {
                     8.0f
             );
             hitResult.getEntity().setOnFireFor(5);
+            serverWorld.spawnParticles(
+                    new DustParticleEffect(0xF7803D, 2.5f),
+                    hitResult.getEntity().getX(),
+                    hitResult.getEntity().getY() + 1.0,
+                    hitResult.getEntity().getZ(),
+                    16,
+                    0.4,
+                    0.4,
+                    0.4,
+                    0
+            );
+            serverWorld.spawnParticles(
+                    ParticleTypes.LAVA,
+                    hitResult.getEntity().getX(),
+                    hitResult.getEntity().getY() + 1.0,
+                    hitResult.getEntity().getZ(),
+                    8,
+                    0.3,
+                    0.3,
+                    0.3,
+                    0.2
+            );
+            serverWorld.spawnParticles(
+                    ParticleTypes.LARGE_SMOKE,
+                    hitResult.getEntity().getX(),
+                    hitResult.getEntity().getY() + 1.0,
+                    hitResult.getEntity().getZ(),
+                    5,
+                    0.2,
+                    0.3,
+                    0.2,
+                    0.02
+            );
         }
     }
 

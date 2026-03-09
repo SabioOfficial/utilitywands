@@ -5,7 +5,10 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ToolMaterial;
+import net.minecraft.particle.DustParticleEffect;
+import net.minecraft.particle.ParticleTypes;
 import net.minecraft.registry.tag.BlockTags;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.world.World;
@@ -52,6 +55,30 @@ public class MagmaWandItem extends Item {
             int hits = hitCounters.getOrDefault(uuid, 0) + 1;
             if (hits >= 5) {
                 hitCounters.put(uuid, 0);
+                if (attacker.getEntityWorld() instanceof ServerWorld serverWorld) {
+                    serverWorld.spawnParticles(
+                            new DustParticleEffect(0xDC4810, 2.0f),
+                            attacker.getX(),
+                            attacker.getY() + 1.0,
+                            attacker.getZ(),
+                            10,
+                            0.3,
+                            0.3,
+                            0.3,
+                            0
+                    );
+                    serverWorld.spawnParticles(
+                            ParticleTypes.FLAME,
+                            attacker.getX(),
+                            attacker.getY() + 1.0,
+                            attacker.getZ(),
+                            8,
+                            0.2,
+                            0.3,
+                            0.2,
+                            0.05
+                    );
+                }
                 MagmaWandHandler.launchFireball(player, target);
             } else {
                 hitCounters.put(uuid, hits);
