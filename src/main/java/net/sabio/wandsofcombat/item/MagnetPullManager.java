@@ -2,13 +2,14 @@ package net.sabio.wandsofcombat.item;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.ExperienceOrbEntity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.s2c.play.EntityVelocityUpdateS2CPacket;
+import net.minecraft.particle.DustParticleEffect;
+import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -26,6 +27,36 @@ public class MagnetPullManager {
     private static final Map<UUID, Map<UUID, Integer>> comboHits = new HashMap<>();
     private static final Map<UUID, Map<UUID, Float>> speedMultipliers = new HashMap<>();
     private static long lastResetTick = 0;
+
+    private static void spawnRing(ServerWorld world, Vec3d center, double radius, int color) {
+        int points = 32;
+        DustParticleEffect dustParticleEffect = new DustParticleEffect(color, 1.2f);
+        for (int i = 0; i < points; i++) {
+            double angle = (Math.PI * 2 / points) * i;
+            double x = center.x + Math.cos(angle) * radius;
+            double z = center.z + Math.sin(angle) * radius;
+            world.spawnParticles(dustParticleEffect, x, center.y, z, 1, 0, 0, 0, 0);
+        }
+    }
+
+    private static void spawnSpiralAround(ServerWorld world, Vec3d from, Vec3d to) {
+        int steps = 12;
+        for (int i = 0; i < steps; i++) {
+            double t = (double) i / steps;
+            double x = from.x + (to.x - from.x) * t;
+            double y = from.y + (to.y - from.y) * t;
+            double z = from.z + (to.z - from.z) * t;
+            double angle = t * Math.PI * 4;
+            double offset = 0.4 * (1 - t);
+            world.spawnParticles(
+                    ParticleTypes.WITCH,
+                    x + Math.cos(angle) * offset,
+                    y,
+                    z + Math.sin(angle) * offset,
+                    1, 0, 0, 0, 0
+            );
+        }
+    }
 
     public static boolean isRepelMode(PlayerEntity player) {
         return repelModeActive.contains(player.getUuid());
@@ -66,6 +97,7 @@ public class MagnetPullManager {
         Box box = player.getBoundingBox().expand(range);
         List<LivingEntity> entities = world.getEntitiesByClass(LivingEntity.class, box, entity -> entity != player && !entity.isRemoved());
         Vec3d playerPosition = player.getEntityPos().add(0, player.getHeight() / 2.0, 0);
+        spawnRing(world, playerPosition, range, 0x4488FF);
         for (LivingEntity entity : entities) {
             float multiplier = getSpeedMultiplier(player, entity);
             Vec3d toward = playerPosition.subtract(entity.getEntityPos()).normalize();
@@ -74,12 +106,54 @@ public class MagnetPullManager {
             if (entity instanceof ServerPlayerEntity serverPlayer) {
                 serverPlayer.networkHandler.sendPacket(new EntityVelocityUpdateS2CPacket(serverPlayer));
             }
+            Vec3d entityPosition = entity.getEntityPos().add(0, entity.getHeight() / 2.0, 0);
+            for (int i = 0; i < 8; i++) {
+                double angle = (Math.PI * 2 / 8) * i;
+                double vx = Math.cos(angle) * 0.15;
+                double vz = Math.sin(angle) * 0.15;
+                world.spawnParticles(
+                        ParticleTypes.WITCH,
+                        entityPosition.x,
+                        entityPosition.y,
+                        entityPosition.z,
+                        1,
+                        vx,
+                        0.1,
+                        vz,
+                        0.05
+                );
+            }
+            spawnSpiralAround(world, entity.getEntityPos(), playerPosition);
         }
     }
     public static void doRepel(PlayerEntity player, double range, float damage) {
         if (!(player.getEntityWorld() instanceof ServerWorld world)) return;
         Box box = player.getBoundingBox().expand(range);
         List<LivingEntity> entities = world.getEntitiesByClass(LivingEntity.class, box, entity -> entity != player && !entity.isRemoved());
+        Vec3d playerPosition = player.getEntityPos().add(0, player.getHeight() / 2.0, 0);
+        spawnRing(world, playerPosition, range, 0xFF4422);
+        world.spawnParticles(
+                ParticleTypes.EXPLOSION,
+                playerPosition.x,
+                playerPosition.y,
+                playerPosition.z,
+                3,
+                0.3,
+                0.3,
+                0.3,
+                0.1
+        );
+        world.spawnParticles(
+                ParticleTypes.FLAME,
+                playerPosition.x,
+                playerPosition.y,
+                playerPosition.z,
+                20,
+                0.5,
+                0.5,
+                0.5,
+                0.15
+        );
         for (LivingEntity entity : entities) {
             float multiplier = getSpeedMultiplier(player, entity);
             Vec3d away = entity.getEntityPos().subtract(player.getEntityPos());
@@ -90,6 +164,21 @@ public class MagnetPullManager {
             entity.damage(world, world.getDamageSources().magic(), damage);
             if (entity instanceof ServerPlayerEntity serverPlayer) {
                 serverPlayer.networkHandler.sendPacket(new EntityVelocityUpdateS2CPacket(serverPlayer));
+            }
+            Vec3d entityPosition = entity.getEntityPos().add(0, entity.getHeight() / 2.0, 0);
+            Vec3d trial = away.multiply(-0.3);
+            for (int i = 0; i < 6; i++) {
+                world.spawnParticles(
+                        ParticleTypes.FLAME,
+                        entityPosition.x + trial.x * i,
+                        entityPosition.y + trial.y * i,
+                        entityPosition.z + trial.z * i,
+                        1,
+                        0.05,
+                        0.05,
+                        0.05,
+                        0.01
+                );
             }
         }
     }
@@ -114,6 +203,19 @@ public class MagnetPullManager {
                     double speed = Math.min(PASSIVE_SPEED, 0.15 + dist * 0.05);
                     item.setVelocity(toward.normalize().multiply(speed));
                     item.velocityDirty = true;
+                    if (currentTick % 3 == 0) {
+                        world.spawnParticles(
+                                ParticleTypes.ENCHANT,
+                                item.getX(),
+                                item.getY() + 0.1,
+                                item.getZ(),
+                                1,
+                                0.05,
+                                0.05,
+                                0.05,
+                                0.01
+                        );
+                    }
                 });
                 world.getEntitiesByClass(ExperienceOrbEntity.class, box, entity -> !entity.isRemoved()).forEach(orb -> {
                     Vec3d toward = playerPos.subtract(orb.getEntityPos());
@@ -122,6 +224,19 @@ public class MagnetPullManager {
                     double speed = Math.min(PASSIVE_SPEED, 0.15 + dist * 0.05);
                     orb.setVelocity(toward.normalize().multiply(speed));
                     orb.velocityDirty = true;
+                    if (currentTick % 3 == 0) {
+                        world.spawnParticles(
+                                ParticleTypes.HAPPY_VILLAGER,
+                                orb.getX(),
+                                orb.getY() + 0.1,
+                                orb.getZ(),
+                                1,
+                                0.05,
+                                0.05,
+                                0.05,
+                                0.01
+                        );
+                    }
                 });
             }
         }
