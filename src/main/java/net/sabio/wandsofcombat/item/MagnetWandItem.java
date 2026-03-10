@@ -9,6 +9,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ToolMaterial;
 import net.minecraft.registry.tag.BlockTags;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.Box;
@@ -50,6 +51,8 @@ public class MagnetWandItem extends Item {
         if (player.getItemCooldownManager().isCoolingDown(stack)) return ActionResult.FAIL;
         if (!world.isClient()) {
             player.getItemCooldownManager().set(stack, COOLDOWN);
+            assert ((ServerWorld) world).getServer() != null;
+            WandCooldownState.get(((ServerWorld)world).getServer()).save(player.getUuid(), "magnet", COOLDOWN);
             if (MagnetPullManager.isRepelMode(player)) {
                 MagnetPullManager.doRepel(player, REPEL_RANGE, REPEL_DAMAGE);
             } else {

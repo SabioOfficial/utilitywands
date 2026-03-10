@@ -39,6 +39,8 @@ public class PhantomWandItem extends Item {
         }
         if (!world.isClient()) {
             player.getItemCooldownManager().set(stack, ABILITY_COOLDOWN);
+            assert ((ServerWorld) world).getServer() != null;
+            WandCooldownState.get(((ServerWorld)world).getServer()).save(player.getUuid(), "phantom", ABILITY_COOLDOWN);
             PhantomModeHandler.activatePhantomMode(player, (ServerWorld) world);
         }
 

@@ -220,6 +220,14 @@ public class MagmaWandHandler {
             UUID uuid = handler.player.getUuid();
             long joinTick = handler.player.getEntityWorld().getTime();
             lastDamageTick.put(uuid, joinTick + 40);
+            WandCooldownState state = WandCooldownState.get(server);
+            int abilityTicks = state.getRemainingTicks(uuid, "magma_ability");
+            int ultimateTicks = state.getRemainingTicks(uuid, "magma_ultimate");
+            int ticks = Math.max(abilityTicks, ultimateTicks);
+            if (ticks > 0) {
+                ItemStack wandStack = handler.player.getMainHandStack().getItem() instanceof MagmaWandItem ? handler.player.getMainHandStack() : handler.player.getOffHandStack();
+                handler.player.getItemCooldownManager().set(wandStack, ticks);
+            }
         });
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
             UUID uuid = handler.player.getUuid();
@@ -263,6 +271,7 @@ public class MagmaWandHandler {
         ));
         ItemStack wandStack = player.getMainHandStack().getItem() instanceof MagmaWandItem ? player.getMainHandStack() : player.getOffHandStack();
         serverPlayer.getItemCooldownManager().set(wandStack, MagmaWandItem.ABILITY_COOLDOWN + MagmaWandItem.ABILITY_DURATION);
+        WandCooldownState.get(Objects.requireNonNull(serverPlayer.getEntityWorld().getServer())).save(uuid, "magma_ability", MagmaWandItem.ABILITY_COOLDOWN + MagmaWandItem.ABILITY_DURATION);
     }
     public static void tryActivateUltimate(PlayerEntity player) {
         if (!(player instanceof ServerPlayerEntity serverPlayer)) return;
@@ -276,6 +285,7 @@ public class MagmaWandHandler {
         buildFireRing(player, world);
         ItemStack wandStack = player.getMainHandStack().getItem() instanceof MagmaWandItem ? player.getMainHandStack() : player.getOffHandStack();
         serverPlayer.getItemCooldownManager().set(wandStack, MagmaWandItem.ULTIMATE_DURATION + MagmaWandItem.ULTIMATE_COOLDOWN);
+        WandCooldownState.get(Objects.requireNonNull(serverPlayer.getEntityWorld().getServer())).save(uuid, "magma_ultimate", MagmaWandItem.ULTIMATE_DURATION + MagmaWandItem.ULTIMATE_COOLDOWN);
     }
     private static Set<BlockPos> computeRingPositions(PlayerEntity player, ServerWorld world) {
         Set<BlockPos> positions = new HashSet<>();

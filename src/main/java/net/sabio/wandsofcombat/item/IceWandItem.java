@@ -181,6 +181,8 @@ public class IceWandItem extends Item {
             boolean hitPlayer = applyAbility(world, player);
             int cooldown = hitPlayer ? FULL_COOLDOWN : LITE_COOLDOWN;
             player.getItemCooldownManager().set(stack, cooldown);
+            assert ((ServerWorld) world).getServer() != null;
+            WandCooldownState.get(((ServerWorld)world).getServer()).save(player.getUuid(), "ice", cooldown);
         }
 
         return ActionResult.SUCCESS;

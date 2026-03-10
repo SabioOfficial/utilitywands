@@ -68,6 +68,8 @@ public class ElectricWandItem extends Item {
         if (!world.isClient()) {
             ServerWorld serverWorld = (ServerWorld) world;
             player.getItemCooldownManager().set(stack, COOLDOWN_DURATION);
+            assert serverWorld.getServer() != null;
+            WandCooldownState.get(serverWorld.getServer()).save(player.getUuid(), "electric", COOLDOWN_DURATION);
             Box box = player.getBoundingBox().expand(ABILITY_RANGE);
             List<LivingEntity> targets = world.getEntitiesByClass(LivingEntity.class, box, entity -> entity != player && !entity.isRemoved());
             if (!targets.isEmpty()) {
