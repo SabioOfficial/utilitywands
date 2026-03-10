@@ -7,6 +7,7 @@ import net.minecraft.entity.ExperienceOrbEntity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.s2c.play.EntityVelocityUpdateS2CPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -31,8 +32,15 @@ public class MagnetPullManager {
     }
     public static void toggleRepelMode(PlayerEntity player) {
         UUID uuid = player.getUuid();
-        if (!repelModeActive.remove(uuid)) {
-            repelModeActive.add(uuid);
+        boolean nowRepel = !repelModeActive.remove(uuid);
+        if (nowRepel) repelModeActive.add(uuid);
+        ItemStack stack = player.getMainHandStack();
+        if (stack.getItem() instanceof MagnetWandItem) {
+            if (nowRepel) {
+                stack.set(ModItems.MAGNET_REPEL_MODE, true);
+            } else {
+                stack.remove(ModItems.MAGNET_REPEL_MODE);
+            }
         }
     }
     public static void recordHit(PlayerEntity attacker, LivingEntity target) {

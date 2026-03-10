@@ -1,9 +1,12 @@
 package net.sabio.wandsofcombat.item;
 
+import com.mojang.serialization.Codec;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
+import net.minecraft.component.ComponentType;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
@@ -77,6 +80,15 @@ public class ModItems {
             Registries.ITEM,
             MAGICAL_STICK_KEY,
             new Item(new Item.Settings().registryKey(MAGICAL_STICK_KEY))
+    );
+
+    public static final ComponentType<Boolean> MAGNET_REPEL_MODE = Registry.register(
+            Registries.DATA_COMPONENT_TYPE,
+            Identifier.of(Wandsofcombat.MOD_ID, "magnet_repel_mode"),
+            ComponentType.<Boolean>builder()
+                    .codec(Codec.BOOL)
+                    .packetCodec(PacketCodecs.BOOLEAN)
+                    .build()
     );
 
     public static final RegistryKey<ItemGroup> WANDS_OF_COMBAT_GROUP_KEY = RegistryKey.of(

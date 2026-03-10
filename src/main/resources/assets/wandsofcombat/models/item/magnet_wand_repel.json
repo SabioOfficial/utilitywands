@@ -1,0 +1,6 @@
+{
+  "parent": "item/handheld",
+  "textures": {
+    "layer0": "wandsofcombat:item/magnet_wand_repel"
+  }
+}
