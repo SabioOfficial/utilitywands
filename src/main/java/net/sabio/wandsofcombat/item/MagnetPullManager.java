@@ -96,12 +96,12 @@ public class MagnetPullManager {
         if (!(player.getEntityWorld() instanceof ServerWorld world)) return;
         Box box = player.getBoundingBox().expand(range);
         List<LivingEntity> entities = world.getEntitiesByClass(LivingEntity.class, box, entity -> entity != player && !entity.isRemoved());
-        Vec3d playerPosition = player.getEntityPos().add(0, player.getHeight() / 2.0, 0);
-        spawnRing(world, playerPosition, range, 0x4488FF);
+        Vec3d playerPos = player.getEntityPos();
+        spawnRing(world, playerPos.add(0, player.getHeight() / 2.0, 0), range, 0x4488FF);
         for (LivingEntity entity : entities) {
             float multiplier = getSpeedMultiplier(player, entity);
-            Vec3d toward = playerPosition.subtract(entity.getEntityPos()).normalize();
-            entity.setVelocity(toward.multiply(1.5 * multiplier));
+            Vec3d toward = new Vec3d(playerPos.x - entity.getX(), 0, playerPos.z - entity.getZ()).normalize();
+            entity.setVelocity(toward.multiply(1.5 * multiplier).add(0, 0.2, 0));
             entity.velocityDirty = true;
             if (entity instanceof ServerPlayerEntity serverPlayer) {
                 serverPlayer.networkHandler.sendPacket(new EntityVelocityUpdateS2CPacket(serverPlayer));
@@ -109,70 +109,49 @@ public class MagnetPullManager {
             Vec3d entityPosition = entity.getEntityPos().add(0, entity.getHeight() / 2.0, 0);
             for (int i = 0; i < 8; i++) {
                 double angle = (Math.PI * 2 / 8) * i;
-                double vx = Math.cos(angle) * 0.15;
-                double vz = Math.sin(angle) * 0.15;
                 world.spawnParticles(
                         ParticleTypes.WITCH,
                         entityPosition.x,
                         entityPosition.y,
                         entityPosition.z,
                         1,
-                        vx,
+                        Math.cos(angle) * 0.15,
                         0.1,
-                        vz,
+                        Math.sin(angle) * 0.15,
                         0.05
                 );
             }
-            spawnSpiralAround(world, entity.getEntityPos(), playerPosition);
+            spawnSpiralAround(world, entity.getEntityPos(), playerPos);
         }
     }
+
     public static void doRepel(PlayerEntity player, double range, float damage) {
         if (!(player.getEntityWorld() instanceof ServerWorld world)) return;
         Box box = player.getBoundingBox().expand(range);
         List<LivingEntity> entities = world.getEntitiesByClass(LivingEntity.class, box, entity -> entity != player && !entity.isRemoved());
-        Vec3d playerPosition = player.getEntityPos().add(0, player.getHeight() / 2.0, 0);
-        spawnRing(world, playerPosition, range, 0xFF4422);
-        world.spawnParticles(
-                ParticleTypes.EXPLOSION,
-                playerPosition.x,
-                playerPosition.y,
-                playerPosition.z,
-                3,
-                0.3,
-                0.3,
-                0.3,
-                0.1
-        );
-        world.spawnParticles(
-                ParticleTypes.FLAME,
-                playerPosition.x,
-                playerPosition.y,
-                playerPosition.z,
-                20,
-                0.5,
-                0.5,
-                0.5,
-                0.15
-        );
+        Vec3d playerPosition = player.getEntityPos();
+        spawnRing(world, playerPosition.add(0, player.getHeight() / 2.0, 0), range, 0xFF4422);
+        world.spawnParticles(ParticleTypes.EXPLOSION, playerPosition.x, playerPosition.y + 1, playerPosition.z, 3, 0.3, 0.3, 0.3, 0.1);
+        world.spawnParticles(ParticleTypes.FLAME, playerPosition.x, playerPosition.y + 1, playerPosition.z, 20, 0.5, 0.5, 0.5, 0.15);
         for (LivingEntity entity : entities) {
             float multiplier = getSpeedMultiplier(player, entity);
-            Vec3d away = entity.getEntityPos().subtract(player.getEntityPos());
+            Vec3d away = new Vec3d(entity.getX() - playerPosition.x, 0, entity.getZ() - playerPosition.z);
             if (away.horizontalLength() < 0.01) away = new Vec3d(1, 0, 0);
             away = away.normalize();
+            entity.damage(world, world.getDamageSources().magic(), damage);
             entity.setVelocity(away.x * 2.0 * multiplier, 0.4, away.z * 2.0 * multiplier);
             entity.velocityDirty = true;
-            entity.damage(world, world.getDamageSources().magic(), damage);
             if (entity instanceof ServerPlayerEntity serverPlayer) {
                 serverPlayer.networkHandler.sendPacket(new EntityVelocityUpdateS2CPacket(serverPlayer));
             }
             Vec3d entityPosition = entity.getEntityPos().add(0, entity.getHeight() / 2.0, 0);
-            Vec3d trial = away.multiply(-0.3);
+            Vec3d trail = away.multiply(-0.3);
             for (int i = 0; i < 6; i++) {
                 world.spawnParticles(
                         ParticleTypes.FLAME,
-                        entityPosition.x + trial.x * i,
-                        entityPosition.y + trial.y * i,
-                        entityPosition.z + trial.z * i,
+                        entityPosition.x + trail.x * i,
+                        entityPosition.y + trail.y * i,
+                        entityPosition.z + trail.z * i,
                         1,
                         0.05,
                         0.05,
