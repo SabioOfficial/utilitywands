@@ -96,6 +96,7 @@ public class ElectricWandLightningHandler {
         for (ServerWorld world : server.getWorlds()) {
             long currentTick = world.getTime();
             pendingBursts.removeIf(burst -> burst.tick(currentTick));
+            Set<UUID> currentlyStunned = new HashSet<>(stunnedEntities.keySet());
             stunnedEntities.entrySet().removeIf(entry -> {
                 if (currentTick >= entry.getValue()) {
                     world.iterateEntities().forEach(entity -> {
@@ -105,23 +106,24 @@ public class ElectricWandLightningHandler {
                     });
                     return true;
                 }
-                world.iterateEntities().forEach(entity -> {
-                    if (!(entity instanceof MobEntity mob)) return;
-                    if (!stunnedEntities.containsKey(mob.getUuid())) return;
-                    mob.setAiDisabled(true);
-                    mob.setAttacking(false);
-                    mob.setVelocity(0, mob.getVelocity().y, 0);
-                    mob.velocityDirty = true;
-                });
                 return false;
             });
-            List<UUID> toRemove = Collections.synchronizedList(new ArrayList<>());
-            for (Map.Entry<UUID, Long> entry : skeletonDespawnTimes.entrySet()) {
+            world.iterateEntities().forEach(entity -> {
+                if (!(entity instanceof MobEntity mob)) return;
+                if (!currentlyStunned.contains(mob.getUuid())) return;
+                if (!stunnedEntities.containsKey(mob.getUuid())) return;
+                mob.setAiDisabled(true);
+                mob.setAttacking(false);
+                mob.setVelocity(0, mob.getVelocity().y, 0);
+                mob.velocityDirty = true;
+            });
+            List<UUID> toRemove = new ArrayList<>();
+            List<Map.Entry<UUID, Long>> snapshot = new ArrayList<>(skeletonDespawnTimes.entrySet());
+            for (Map.Entry<UUID, Long> entry : snapshot) {
                 UUID skeletonId = entry.getKey();
                 world.iterateEntities().forEach(entity -> {
                     if (!(entity instanceof SkeletonEntity skeleton)) return;
                     if (!skeleton.getUuid().equals(skeletonId)) return;
-                    LivingEntity currentTarget = skeleton.getTarget();
                     long spawnTime = skeletonSpawnTimes.getOrDefault(skeletonId, currentTick);
                     boolean graceOver = currentTick - spawnTime > 40;
                     boolean expired = currentTick >= entry.getValue();
@@ -130,16 +132,10 @@ public class ElectricWandLightningHandler {
                     if (expired || (targetDead && graceOver)) {
                         skeleton.discard();
                         toRemove.add(skeletonId);
-                        summonedSkeletons.remove(skeletonId);
-                        skeletonTargets.remove(skeletonId);
                         return;
                     }
                     if (originalTarget != null && !originalTarget.isDead()) {
                         skeleton.setTarget(originalTarget);
-                        Long nextAttack = skeletonNextAttackTick.get(skeletonId);
-                        if (nextAttack != null && currentTick >= nextAttack) {
-                            skeletonNextAttackTick.put(skeletonId, currentTick + 20);
-                        }
                     }
                 });
             }
