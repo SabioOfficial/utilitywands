@@ -6,9 +6,15 @@
     " / "
   ],
   "key": {
-    "/": "minecraft:stick",
-    "D": "minecraft:diamond",
-    "O": "minecraft:obsidian"
+    "/": {
+      "item": "minecraft:stick"
+    },
+    "D": {
+      "item": "minecraft:diamond"
+    },
+    "O": {
+      "item": "minecraft:obsidian"
+    }
   },
   "result": {
     "id": "wandsofcombat:magical_stick",

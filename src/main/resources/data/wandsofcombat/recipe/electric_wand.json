@@ -6,9 +6,15 @@
     "S  "
   ],
   "key": {
-    "C": "minecraft:copper_block",
-    "S": "wandsofcombat:magical_stick",
-    "L": "minecraft:lightning_rod"
+    "C": {
+      "item": "minecraft:copper_block"
+    },
+    "S": {
+      "item": "wandsofcombat:magical_stick"
+    },
+    "L": {
+      "item": "minecraft:lightning_rod"
+    }
   },
   "result": {
     "id": "wandsofcombat:electric_wand",

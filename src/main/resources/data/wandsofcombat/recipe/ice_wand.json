@@ -6,9 +6,15 @@
     "S  "
   ],
   "key": {
-    "B": "minecraft:blue_ice",
-    "S": "wandsofcombat:magical_stick",
-    "|": "minecraft:breeze_rod"
+    "B": {
+      "item": "minecraft:blue_ice"
+    },
+    "S": {
+      "item": "wandsofcombat:magical_stick"
+    },
+    "|": {
+      "item": "minecraft:breeze_rod"
+    }
   },
   "result": {
     "id": "wandsofcombat:ice_wand",

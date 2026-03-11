@@ -6,8 +6,12 @@
     "S  "
   ],
   "key": {
-    "I": "minecraft:iron_block",
-    "S": "wandsofcombat:magical_stick"
+    "I": {
+      "item": "minecraft:iron_block"
+    },
+    "S": {
+      "item": "wandsofcombat:magical_stick"
+    }
   },
   "result": {
     "id": "wandsofcombat:magnet_wand",

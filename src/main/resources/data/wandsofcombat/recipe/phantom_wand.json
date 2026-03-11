@@ -6,8 +6,12 @@
     "S  "
   ],
   "key": {
-    "C": "minecraft:crying_obsidian",
-    "S": "wandsofcombat:magical_stick"
+    "C": {
+      "item": "minecraft:crying_obsidian"
+    },
+    "S": {
+      "item": "wandsofcombat:magical_stick"
+    }
   },
   "result": {
     "id": "wandsofcombat:phantom_wand",

@@ -6,8 +6,12 @@
     "S  "
   ],
   "key": {
-    "M": "minecraft:magma_block",
-    "S": "wandsofcombat:magical_stick"
+    "M": {
+      "item": "minecraft:magma_block"
+    },
+    "S": {
+      "item": "wandsofcombat:magical_stick"
+    }
   },
   "result": {
     "id": "wandsofcombat:magma_wand",
