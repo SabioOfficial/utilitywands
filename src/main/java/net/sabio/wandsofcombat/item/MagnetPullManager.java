@@ -68,6 +68,10 @@ public class MagnetPullManager {
         ItemStack stack = player.getMainHandStack();
         if (stack.getItem().getRegistryEntry().matchesKey(ModItems.MAGNET_WAND_KEY)) {
             stack.set(ModDataComponentTypes.REPEL_MODE, nowRepel);
+            if (player instanceof ServerPlayerEntity serverPlayer) {
+                serverPlayer.getInventory().markDirty();
+                serverPlayer.currentScreenHandler.syncState();
+            }
         }
     }
     public static void recordHit(PlayerEntity attacker, LivingEntity target) {
