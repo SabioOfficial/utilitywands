@@ -24,7 +24,7 @@ public class ModItems {
     public static final MagnetWandItem MAGNET_WAND = Registry.register(
             Registries.ITEM,
             MAGNET_WAND_KEY,
-            new MagnetWandItem(new Item.Settings().registryKey(MAGNET_WAND_KEY))
+            new MagnetWandItem(new Item.Settings())
     );
 
     public static final RegistryKey<Item> ICE_WAND_KEY = RegistryKey.of(
@@ -35,7 +35,7 @@ public class ModItems {
     public static final IceWandItem ICE_WAND = Registry.register(
             Registries.ITEM,
             ICE_WAND_KEY,
-            new IceWandItem(new Item.Settings().registryKey(ICE_WAND_KEY))
+            new IceWandItem(new Item.Settings())
     );
 
     public static final RegistryKey<Item> ELECTRIC_WAND_KEY = RegistryKey.of(
@@ -46,7 +46,7 @@ public class ModItems {
     public static final ElectricWandItem ELECTRIC_WAND = Registry.register(
             Registries.ITEM,
             ELECTRIC_WAND_KEY,
-            new ElectricWandItem(new Item.Settings().registryKey(ELECTRIC_WAND_KEY))
+            new ElectricWandItem(new Item.Settings())
     );
 
     public static final RegistryKey<Item> PHANTOM_WAND_KEY = RegistryKey.of(
@@ -57,7 +57,7 @@ public class ModItems {
     public static final PhantomWandItem PHANTOM_WAND = Registry.register(
             Registries.ITEM,
             PHANTOM_WAND_KEY,
-            new PhantomWandItem(new Item.Settings().registryKey(PHANTOM_WAND_KEY))
+            new PhantomWandItem(new Item.Settings())
     );
 
     public static final RegistryKey<Item> MAGMA_WAND_KEY = RegistryKey.of(
@@ -68,7 +68,7 @@ public class ModItems {
     public static final MagmaWandItem MAGMA_WAND = Registry.register(
             Registries.ITEM,
             MAGMA_WAND_KEY,
-            new MagmaWandItem(new Item.Settings().registryKey(MAGMA_WAND_KEY))
+            new MagmaWandItem(new Item.Settings())
     );
 
     public static final RegistryKey<Item> MAGICAL_STICK_KEY = RegistryKey.of(
@@ -79,7 +79,7 @@ public class ModItems {
     public static final Item MAGICAL_STICK = Registry.register(
             Registries.ITEM,
             MAGICAL_STICK_KEY,
-            new Item(new Item.Settings().registryKey(MAGICAL_STICK_KEY))
+            new Item(new Item.Settings())
     );
 
     public static final ComponentType<Boolean> MAGNET_REPEL_MODE = Registry.register(
@@ -87,7 +87,7 @@ public class ModItems {
             Identifier.of(Wandsofcombat.MOD_ID, "magnet_repel_mode"),
             ComponentType.<Boolean>builder()
                     .codec(Codec.BOOL)
-                    .packetCodec(PacketCodecs.BOOLEAN)
+                    .packetCodec(PacketCodecs.BOOL)
                     .build()
     );
 

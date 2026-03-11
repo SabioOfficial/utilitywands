@@ -23,14 +23,10 @@ public class MagmaWandFireballEntity extends FireballEntity {
     protected void onEntityHit(EntityHitResult hitResult) {
         super.onEntityHit(hitResult);
         if (getEntityWorld() instanceof ServerWorld serverWorld) {
-            hitResult.getEntity().damage(
-                    serverWorld,
-                    serverWorld.getDamageSources().fireball(this, getOwner()),
-                    8.0f
-            );
+            hitResult.getEntity().damage(serverWorld.getDamageSources().fireball(this, getOwner()), 8.0f);
             hitResult.getEntity().setOnFireFor(5);
             serverWorld.spawnParticles(
-                    new DustParticleEffect(0xF7803D, 2.5f),
+                    new DustParticleEffect(new org.joml.Vector3f(0xF7/255f, 0x80/255f, 0x3D/255f), 2.5f),
                     hitResult.getEntity().getX(),
                     hitResult.getEntity().getY() + 1.0,
                     hitResult.getEntity().getZ(),

@@ -26,6 +26,7 @@ public class Wandsofcombat implements ModInitializer {
         PhantomSyncPacket.initialize();
         MagmaWandHandler.initialize();
         IceWandComboHandler.initialize();
+        ModDataComponentTypes.initialize();
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             net.minecraft.server.network.ServerPlayerEntity player = handler.player;
             WandCooldownState state = WandCooldownState.get(server);
@@ -40,7 +41,7 @@ public class Wandsofcombat implements ModInitializer {
                         case "phantom" -> ModItems.PHANTOM_WAND;
                         default -> ModItems.MAGMA_WAND;
                     };
-                    player.getItemCooldownManager().set(new ItemStack(item), ticks);
+                    player.getItemCooldownManager().set(item, ticks);
                 }
             }
         });

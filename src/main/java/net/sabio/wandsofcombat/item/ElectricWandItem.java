@@ -10,17 +10,21 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.ToolMaterial;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.ActionResult;
+import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.Box;
 import net.minecraft.world.World;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import net.minecraft.component.type.AttributeModifiersComponent;
+import net.minecraft.entity.attribute.EntityAttributeModifier;
+import net.minecraft.entity.attribute.EntityAttributes;
+import net.minecraft.item.SwordItem;
+import net.minecraft.item.ToolMaterials;
 
-public class ElectricWandItem extends Item {
+public class ElectricWandItem extends SwordItem {
     public static final int COOLDOWN_DURATION = 600; // 30 seconds
     private static final float ATTACK_DAMAGE_BONUS = 4.0f; // total atk damage: 8
     private static final float ATTACK_SPEED = -3f;
@@ -29,12 +33,8 @@ public class ElectricWandItem extends Item {
     private static final Map<UUID, Integer> hitCounters = new HashMap<>();
 
     public ElectricWandItem(Settings settings) {
-        super(ToolMaterial.DIAMOND.applyToolSettings(
-                settings,
-                BlockTags.SWORD_EFFICIENT,
-                ATTACK_DAMAGE_BONUS,
-                ATTACK_SPEED,
-                0.0f
+        super(ToolMaterials.DIAMOND, settings.attributeModifiers(
+                SwordItem.createAttributeModifiers(ToolMaterials.DIAMOND, (int) ATTACK_DAMAGE_BONUS, ATTACK_SPEED)
         ));
     }
 
@@ -43,31 +43,31 @@ public class ElectricWandItem extends Item {
         lightning.setPosition(target.getX(), target.getY(), target.getZ());
         lightning.setCosmetic(true);
         world.spawnEntity(lightning);
-        target.damage(world, world.getDamageSources().lightningBolt(), 5.0f);
+        target.damage(world.getDamageSources().lightningBolt(), 5.0f);
     }
 
     @Override
-    public void postHit(ItemStack stack, LivingEntity target, LivingEntity attacker) {
-        if (attacker instanceof PlayerEntity player && !attacker.getEntityWorld().isClient()) {
+    public boolean postHit(ItemStack stack, LivingEntity target, LivingEntity attacker) {
+        if (attacker instanceof PlayerEntity player && !attacker.getWorld().isClient()) {
             UUID uuid = player.getUuid();
             int hits = hitCounters.getOrDefault(uuid, 0) + 1;
             if (hits >= 3) {
                 hitCounters.put(uuid, 0);
-                strikeLightningOn(target, (ServerWorld) attacker.getEntityWorld());
+                strikeLightningOn(target, (ServerWorld) attacker.getWorld());
             } else {
                 hitCounters.put(uuid, hits);
             }
         }
-        super.postHit(stack, target, attacker);
+        return super.postHit(stack, target, attacker);
     }
 
     @Override
-    public ActionResult use(World world, PlayerEntity player, Hand hand) {
+    public TypedActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
         ItemStack stack = player.getStackInHand(hand);
-        if (player.getItemCooldownManager().isCoolingDown(stack)) return ActionResult.FAIL;
+        if (player.getItemCooldownManager().isCoolingDown(this)) return TypedActionResult.fail(player.getStackInHand(hand));
         if (!world.isClient()) {
             ServerWorld serverWorld = (ServerWorld) world;
-            player.getItemCooldownManager().set(stack, COOLDOWN_DURATION);
+            player.getItemCooldownManager().set(this, COOLDOWN_DURATION);
             assert serverWorld.getServer() != null;
             WandCooldownState.get(serverWorld.getServer()).save(player.getUuid(), "electric", COOLDOWN_DURATION);
             Box box = player.getBoundingBox().expand(ABILITY_RANGE);
@@ -76,6 +76,6 @@ public class ElectricWandItem extends Item {
                 ElectricWandLightningHandler.scheduleAbility(serverWorld, player, targets, LIGHTNING_COUNT);
             }
         }
-        return ActionResult.SUCCESS;
+        return TypedActionResult.success(player.getStackInHand(hand));
     }
 }

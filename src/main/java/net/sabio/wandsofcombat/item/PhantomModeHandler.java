@@ -137,7 +137,7 @@ public class PhantomModeHandler {
         }
     }
     private static void manageReachAttribute(PlayerEntity player, boolean holding) {
-        var reachAttribute = player.getAttributeInstance(EntityAttributes.ENTITY_INTERACTION_RANGE);
+        var reachAttribute = player.getAttributeInstance(EntityAttributes.PLAYER_ENTITY_INTERACTION_RANGE);
         if (reachAttribute == null) return;
         reachAttribute.removeModifier(REACH_MODIFIER_ID);
         if (holding) {
@@ -192,14 +192,13 @@ public class PhantomModeHandler {
                 double y = pull.startPos.y + (pull.endPos.y - pull.startPos.y) * t;
                 double z = pull.startPos.z + (pull.endPos.z - pull.startPos.z) * t;
                 pull.attacker.teleport(
-                        pull.attacker.getEntityWorld(),
+                        (ServerWorld) pull.attacker.getWorld(),
                         x,
                         y,
                         z,
-                        java.util.Set.of(),
+                        Set.of(),
                         pull.attacker.getYaw(),
-                        pull.attacker.getPitch(),
-                        false
+                        pull.attacker.getPitch()
                 );
                 if (pull.ticksElapsed >= pull.totalTicks) {
                     pull.attacker.attack(pull.target);
@@ -216,7 +215,7 @@ public class PhantomModeHandler {
         ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
             if (entity instanceof PlayerEntity player) {
                 Long immunityEnd = pullImmunityEndTimes.get(player.getUuid());
-                if (immunityEnd != null && entity.getEntityWorld().getTime() <= immunityEnd) {
+                if (immunityEnd != null && entity.getWorld().getTime() <= immunityEnd) {
                     return false;
                 }
             }
@@ -224,7 +223,7 @@ public class PhantomModeHandler {
                 UUID attackerId = attacker.getUuid();
                 if (PhantomWandItem.phantomPlayers.contains(attackerId) && !applyingReducedDamage.contains(attackerId) && attacker.getMainHandStack().getItem() instanceof PhantomWandItem) {
                     applyingReducedDamage.add(attackerId);
-                    entity.damage((ServerWorld) attacker.getEntityWorld(), source, amount * 0.2f);
+                    entity.damage(source, amount * 0.2f);
                     applyingReducedDamage.remove(attackerId);
                     return false;
                 }
@@ -248,7 +247,7 @@ public class PhantomModeHandler {
                 handler.player.getAbilities().flying = false;
                 handler.player.sendAbilitiesUpdate();
             }
-            var reachAttribute = handler.player.getAttributeInstance(EntityAttributes.ENTITY_INTERACTION_RANGE);
+            var reachAttribute = handler.player.getAttributeInstance(EntityAttributes.PLAYER_ENTITY_INTERACTION_RANGE);
             if (reachAttribute != null) {
                 reachAttribute.removeModifier(REACH_MODIFIER_ID);
             }
@@ -272,17 +271,17 @@ public class PhantomModeHandler {
         if (distance <= MELEE_RANGE || distance > PULL_RANGE) {
             return false;
         }
-        long immunityEnd = (attacker.getEntityWorld()).getTime() + PULL_IMMUNITY_DURATION + 5;
+        long immunityEnd = (attacker.getWorld()).getTime() + PULL_IMMUNITY_DURATION + 5;
         pullImmunityEndTimes.put(attacker.getUuid(), immunityEnd);
         PhantomWandItem.pullingPlayers.add(attacker.getUuid());
-        Vec3d direction = target.getEntityPos().subtract(attacker.getEntityPos()).normalize();
+        Vec3d direction = target.getPos().subtract(attacker.getPos()).normalize();
         double pullDistance = distance - MELEE_RANGE + 0.5;
-        Vec3d destination = attacker.getEntityPos().add(direction.multiply(pullDistance));
+        Vec3d destination = attacker.getPos().add(direction.multiply(pullDistance));
 
         activePulls.put(attacker.getUuid(), new PullProgress(
                 attacker,
                 target,
-                attacker.getEntityPos(),
+                attacker.getPos(),
                 destination,
                 8
         ));

@@ -10,15 +10,21 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.ToolMaterial;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.ActionResult;
+import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.Box;
 import net.minecraft.world.World;
+import net.minecraft.component.type.AttributeModifiersComponent;
+import net.minecraft.entity.attribute.EntityAttributeModifier;
+import net.minecraft.entity.attribute.EntityAttributes;
+import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.item.SwordItem;
+import net.minecraft.item.ToolMaterials;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MagnetWandItem extends Item {
+public class MagnetWandItem extends SwordItem {
     public static final int COOLDOWN = 600; // 30 seconds (in ticks)
     private static final float ATTACK_DAMAGE_BONUS = 3.0f;
     private static final float ATTACK_SPEED = -2.4f;
@@ -27,30 +33,26 @@ public class MagnetWandItem extends Item {
     private static final float REPEL_DAMAGE = 6.0f;
 
     public MagnetWandItem(Settings settings) {
-        super(ToolMaterial.DIAMOND.applyToolSettings(
-                settings,
-                BlockTags.SWORD_EFFICIENT,
-                ATTACK_DAMAGE_BONUS,
-                ATTACK_SPEED,
-                0.0f
+        super(ToolMaterials.DIAMOND, settings.attributeModifiers(
+                SwordItem.createAttributeModifiers(ToolMaterials.DIAMOND, (int) ATTACK_DAMAGE_BONUS, ATTACK_SPEED)
         ));
     }
 
     @Override
-    public void postHit(ItemStack stack, LivingEntity target, LivingEntity attacker) {
-        if (attacker instanceof PlayerEntity player && !attacker.getEntityWorld().isClient()) {
+    public boolean postHit(ItemStack stack, LivingEntity target, LivingEntity attacker) {
+        if (attacker instanceof PlayerEntity player && !attacker.getWorld().isClient()) {
             MagnetPullManager.recordHit(player, target);
         }
-        super.postHit(stack, target, attacker);
+        return super.postHit(stack, target, attacker);
     }
 
     @Override
-    public ActionResult use(World world, PlayerEntity player, Hand hand) {
-        if (hand == Hand.OFF_HAND) return ActionResult.PASS;
+    public TypedActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
+        if (hand == Hand.OFF_HAND) return TypedActionResult.pass(player.getStackInHand(hand));
         ItemStack stack = player.getStackInHand(hand);
-        if (player.getItemCooldownManager().isCoolingDown(stack)) return ActionResult.FAIL;
+        if (player.getItemCooldownManager().isCoolingDown(this)) return TypedActionResult.fail(player.getStackInHand(hand));
         if (!world.isClient()) {
-            player.getItemCooldownManager().set(stack, COOLDOWN);
+            player.getItemCooldownManager().set(this, COOLDOWN);
             assert ((ServerWorld) world).getServer() != null;
             WandCooldownState.get(((ServerWorld)world).getServer()).save(player.getUuid(), "magnet", COOLDOWN);
             if (MagnetPullManager.isRepelMode(player)) {
@@ -59,6 +61,6 @@ public class MagnetWandItem extends Item {
                 MagnetPullManager.doAbilityPull(player, ABILITY_PULL_RANGE);
             }
         }
-        return ActionResult.SUCCESS;
+        return TypedActionResult.success(player.getStackInHand(hand));
     }
 }

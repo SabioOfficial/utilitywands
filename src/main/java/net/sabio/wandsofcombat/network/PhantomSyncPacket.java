@@ -10,7 +10,7 @@ import net.sabio.wandsofcombat.Wandsofcombat;
 
 public record PhantomSyncPacket(boolean active) implements CustomPayload {
     public static final CustomPayload.Id<PhantomSyncPacket> ID = new CustomPayload.Id<>(Identifier.of(Wandsofcombat.MOD_ID, "phantom_sync"));
-    public static final PacketCodec<PacketByteBuf, PhantomSyncPacket> CODEC = PacketCodec.tuple(PacketCodecs.BOOLEAN, PhantomSyncPacket::active, PhantomSyncPacket::new);
+    public static final PacketCodec<PacketByteBuf, PhantomSyncPacket> CODEC = PacketCodec.tuple(PacketCodecs.BOOL, PhantomSyncPacket::active, PhantomSyncPacket::new);
     @Override
     public CustomPayload.Id<? extends CustomPayload> getId() {
         return ID;

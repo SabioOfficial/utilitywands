@@ -2,6 +2,8 @@ package net.sabio.wandsofcombat.item;
 
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.packet.CustomPayload;
@@ -24,7 +26,6 @@ public class MagnetTogglePacket {
                         MagnetPullManager.toggleRepelMode(context.player())));
     }
     public static void initializeClient() {
-        
     }
     public static void sendToggle() {
         net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(new Payload());

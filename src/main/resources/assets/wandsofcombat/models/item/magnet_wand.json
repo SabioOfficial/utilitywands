@@ -2,5 +2,13 @@
   "parent": "item/handheld",
   "textures": {
     "layer0": "wandsofcombat:item/magnet_wand"
-  }
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "wandsofcombat:magnet_repel_mode": 1.0
+      },
+      "model": "wandsofcombat:item/magnet_wand_repel"
+    }
+  ]
 }

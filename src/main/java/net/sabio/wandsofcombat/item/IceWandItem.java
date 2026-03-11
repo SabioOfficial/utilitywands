@@ -11,15 +11,17 @@ import net.minecraft.item.ToolMaterial;
 import net.minecraft.particle.*;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.ActionResult;
+import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
+import net.minecraft.item.SwordItem;
+import net.minecraft.item.ToolMaterials;
 
 import java.util.List;
 
-public class IceWandItem extends Item {
+public class IceWandItem extends SwordItem {
     public static final int LITE_COOLDOWN = 400; // 20 seconds; lite = mobs only affected ability
     public static final int FULL_COOLDOWN = 600; // 30 seconds; full = mobs + players affected ability
     private static final double LITE_RANGE = 8.0;
@@ -72,7 +74,7 @@ public class IceWandItem extends Item {
                         0.1
                 );
                 serverWorld.spawnParticles(
-                        new DustParticleEffect(0x80D9FF, 2.0f),
+                        new DustParticleEffect(new org.joml.Vector3f(0x80/255f, 0xD9/255f, 0xFF/255f), 2.0f),
                         mob.getX(),
                         mob.getY() + 1.0,
                         mob.getZ(),
@@ -114,7 +116,7 @@ public class IceWandItem extends Item {
                         0.05
                 );
                 serverWorld.spawnParticles(
-                        new DustParticleEffect(0x80D9FF, 2.0f),
+                        new DustParticleEffect(new org.joml.Vector3f(0x80/255f, 0xD9/255f, 0xFF/255f), 2.0f),
                         target.getX(),
                         target.getY() + 1.0,
                         target.getZ(),
@@ -134,7 +136,7 @@ public class IceWandItem extends Item {
                 double posX = player.getX() + range * Math.cos(angle);
                 double posZ = player.getZ() + range * Math.sin(range);
                 serverWorld.spawnParticles(
-                        new DustParticleEffect(0x80D9FF, 1.5f),
+                        new DustParticleEffect(new org.joml.Vector3f(0x80/255f, 0xD9/255f, 0xFF/255f), 1.5f),
                         posX,
                         player.getY() + 0.5,
                         posZ,
@@ -162,37 +164,33 @@ public class IceWandItem extends Item {
     }
 
     public IceWandItem(Settings settings) {
-        super(ToolMaterial.DIAMOND.applyToolSettings(
-                settings,
-                BlockTags.SWORD_EFFICIENT,
-                ATTACK_DAMAGE_BONUS,
-                ATTACK_SPEED,
-                0.0f
+        super(ToolMaterials.DIAMOND, settings.attributeModifiers(
+                SwordItem.createAttributeModifiers(ToolMaterials.DIAMOND, (int) ATTACK_DAMAGE_BONUS, ATTACK_SPEED)
         ));
     }
 
     @Override
-    public ActionResult use(World world, PlayerEntity player, Hand hand) {
+    public TypedActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
         ItemStack stack = player.getStackInHand(hand);
-        if (player.getItemCooldownManager().isCoolingDown(stack)) {
-            return ActionResult.FAIL;
+        if (player.getItemCooldownManager().isCoolingDown(this)) {
+            return TypedActionResult.fail(player.getStackInHand(hand));
         }
         if (!world.isClient()) {
             boolean hitPlayer = applyAbility(world, player);
             int cooldown = hitPlayer ? FULL_COOLDOWN : LITE_COOLDOWN;
-            player.getItemCooldownManager().set(stack, cooldown);
+            player.getItemCooldownManager().set(this, cooldown);
             assert ((ServerWorld) world).getServer() != null;
             WandCooldownState.get(((ServerWorld)world).getServer()).save(player.getUuid(), "ice", cooldown);
         }
 
-        return ActionResult.SUCCESS;
+        return TypedActionResult.success(player.getStackInHand(hand));
     }
 
     @Override
-    public void postHit(ItemStack stack, LivingEntity target, LivingEntity attacker) {
-        if (attacker instanceof PlayerEntity player && !attacker.getEntityWorld().isClient()) {
+    public boolean postHit(ItemStack stack, LivingEntity target, LivingEntity attacker) {
+        if (attacker instanceof PlayerEntity player && !attacker.getWorld().isClient()) {
             IceWandComboHandler.onHit(player, target);
         }
-        super.postHit(stack, target, attacker);
+        return super.postHit(stack, target, attacker);
     }
 }
