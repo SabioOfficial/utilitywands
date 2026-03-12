@@ -22,7 +22,7 @@ public class MagmaWandFireballEntity extends FireballEntity {
     @Override
     protected void onEntityHit(EntityHitResult hitResult) {
         super.onEntityHit(hitResult);
-        if (getEntityWorld() instanceof ServerWorld serverWorld) {
+        if (getWorld() instanceof ServerWorld serverWorld) {
             hitResult.getEntity().damage(
                     serverWorld,
                     serverWorld.getDamageSources().fireball(this, getOwner()),

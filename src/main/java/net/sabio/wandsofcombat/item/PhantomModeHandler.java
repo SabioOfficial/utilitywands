@@ -192,7 +192,7 @@ public class PhantomModeHandler {
                 double y = pull.startPos.y + (pull.endPos.y - pull.startPos.y) * t;
                 double z = pull.startPos.z + (pull.endPos.z - pull.startPos.z) * t;
                 pull.attacker.teleport(
-                        pull.attacker.getEntityWorld(),
+                        pull.attacker.getWorld(),
                         x,
                         y,
                         z,
@@ -216,7 +216,7 @@ public class PhantomModeHandler {
         ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
             if (entity instanceof PlayerEntity player) {
                 Long immunityEnd = pullImmunityEndTimes.get(player.getUuid());
-                if (immunityEnd != null && entity.getEntityWorld().getTime() <= immunityEnd) {
+                if (immunityEnd != null && entity.getWorld().getTime() <= immunityEnd) {
                     return false;
                 }
             }
@@ -224,7 +224,7 @@ public class PhantomModeHandler {
                 UUID attackerId = attacker.getUuid();
                 if (PhantomWandItem.phantomPlayers.contains(attackerId) && !applyingReducedDamage.contains(attackerId) && attacker.getMainHandStack().getItem() instanceof PhantomWandItem) {
                     applyingReducedDamage.add(attackerId);
-                    entity.damage((ServerWorld) attacker.getEntityWorld(), source, amount * 0.2f);
+                    entity.damage((ServerWorld) attacker.getWorld(), source, amount * 0.2f);
                     applyingReducedDamage.remove(attackerId);
                     return false;
                 }
@@ -272,17 +272,17 @@ public class PhantomModeHandler {
         if (distance <= MELEE_RANGE || distance > PULL_RANGE) {
             return false;
         }
-        long immunityEnd = (attacker.getEntityWorld()).getTime() + PULL_IMMUNITY_DURATION + 5;
+        long immunityEnd = (attacker.getWorld()).getTime() + PULL_IMMUNITY_DURATION + 5;
         pullImmunityEndTimes.put(attacker.getUuid(), immunityEnd);
         PhantomWandItem.pullingPlayers.add(attacker.getUuid());
-        Vec3d direction = target.getEntityPos().subtract(attacker.getEntityPos()).normalize();
+        Vec3d direction = target.getPos().subtract(attacker.getPos()).normalize();
         double pullDistance = distance - MELEE_RANGE + 0.5;
-        Vec3d destination = attacker.getEntityPos().add(direction.multiply(pullDistance));
+        Vec3d destination = attacker.getPos().add(direction.multiply(pullDistance));
 
         activePulls.put(attacker.getUuid(), new PullProgress(
                 attacker,
                 target,
-                attacker.getEntityPos(),
+                attacker.getPos(),
                 destination,
                 8
         ));

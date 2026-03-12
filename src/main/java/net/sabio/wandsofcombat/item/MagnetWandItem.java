@@ -38,7 +38,7 @@ public class MagnetWandItem extends Item {
 
     @Override
     public void postHit(ItemStack stack, LivingEntity target, LivingEntity attacker) {
-        if (attacker instanceof PlayerEntity player && !attacker.getEntityWorld().isClient()) {
+        if (attacker instanceof PlayerEntity player && !attacker.getWorld().isClient()) {
             MagnetPullManager.recordHit(player, target);
         }
         super.postHit(stack, target, attacker);

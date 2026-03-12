@@ -16,12 +16,7 @@ public class WandsofcombatClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         MagnetTogglePacket.initializeClient();
-        KeyBinding.Category wandsCategory;
-        try {
-            wandsCategory = KeyBinding.Category.create(Identifier.of(Wandsofcombat.MOD_ID, "wands"));
-        } catch (IllegalArgumentException error) {
-            wandsCategory = KeyBinding.Category.MISC;
-        }
+        String wandsCategory = "key.category.wandsofcombat.wands";
         toggleRepelKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.wandsofcombat.toggle_repel",
                 InputUtil.Type.KEYSYM,

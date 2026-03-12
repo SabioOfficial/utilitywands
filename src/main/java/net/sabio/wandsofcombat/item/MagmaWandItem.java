@@ -50,12 +50,12 @@ public class MagmaWandItem extends Item {
     }
     @Override
     public void postHit(ItemStack stack, LivingEntity target, LivingEntity attacker) {
-        if (attacker instanceof PlayerEntity player && !attacker.getEntityWorld().isClient()) {
+        if (attacker instanceof PlayerEntity player && !attacker.getWorld().isClient()) {
             UUID uuid = player.getUuid();
             int hits = hitCounters.getOrDefault(uuid, 0) + 1;
             if (hits >= 5) {
                 hitCounters.put(uuid, 0);
-                if (attacker.getEntityWorld() instanceof ServerWorld serverWorld) {
+                if (attacker.getWorld() instanceof ServerWorld serverWorld) {
                     serverWorld.spawnParticles(
                             new DustParticleEffect(0xDC4810, 2.0f),
                             attacker.getX(),

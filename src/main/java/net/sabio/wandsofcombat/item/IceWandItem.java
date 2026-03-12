@@ -190,7 +190,7 @@ public class IceWandItem extends Item {
 
     @Override
     public void postHit(ItemStack stack, LivingEntity target, LivingEntity attacker) {
-        if (attacker instanceof PlayerEntity player && !attacker.getEntityWorld().isClient()) {
+        if (attacker instanceof PlayerEntity player && !attacker.getWorld().isClient()) {
             IceWandComboHandler.onHit(player, target);
         }
         super.postHit(stack, target, attacker);

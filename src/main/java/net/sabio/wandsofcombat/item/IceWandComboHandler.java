@@ -44,8 +44,8 @@ public class IceWandComboHandler {
         boolean started = false;
         private static List<Vec3d> computeSpikePositions(PlayerEntity attacker, LivingEntity target) {
             List<Vec3d> positions = new ArrayList<>();
-            Vec3d start = attacker.getEntityPos();
-            Vec3d end = target.getEntityPos();
+            Vec3d start = attacker.getPos();
+            Vec3d end = target.getPos();
             Vec3d direction = end.subtract(start).normalize();
             double totalDistance = start.distanceTo(end);
             double traveled = SPIKE_SPACING;
@@ -206,7 +206,7 @@ public class IceWandComboHandler {
                         Box knockbackBox = player.getBoundingBox().expand(4.0);
                         List<LivingEntity> nearby = world.getEntitiesByClass(LivingEntity.class, knockbackBox, entity -> entity != player && !entity.isRemoved());
                         for (LivingEntity entity : nearby) {
-                            Vec3d away = entity.getEntityPos().subtract(player.getEntityPos());
+                            Vec3d away = entity.getPos().subtract(player.getPos());
                             if (away.horizontalLength() < 0.01) away = new Vec3d(1, 0, 0);
                             away = away.normalize();
                             entity.setVelocity(away.x * 1.1, 0.1, away.z * 1.1);
@@ -228,15 +228,15 @@ public class IceWandComboHandler {
             if (!(entity instanceof PlayerEntity p)) return true;
             if (!windUpEndTick.containsKey(p.getUuid())) return true;
             if (amount > 0) {
-                entity.damage((ServerWorld) entity.getEntityWorld(), source, amount * 0.1f);
+                entity.damage((ServerWorld) entity.getWorld(), source, amount * 0.1f);
                 return false;
             }
             return true;
         });
     }
     public static void onHit(PlayerEntity attacker, LivingEntity target) {
-        if (attacker.getEntityWorld().isClient()) return;
-        if (!(attacker.getEntityWorld() instanceof ServerWorld serverWorld)) return;
+        if (attacker.getWorld().isClient()) return;
+        if (!(attacker.getWorld() instanceof ServerWorld serverWorld)) return;
         UUID uuid = attacker.getUuid();
         if (windUpEndTick.containsKey(uuid)) return;
         long currentTick = serverWorld.getTime();

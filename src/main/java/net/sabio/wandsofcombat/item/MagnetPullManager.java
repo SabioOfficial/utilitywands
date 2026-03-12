@@ -93,10 +93,10 @@ public class MagnetPullManager {
         return multipliers.getOrDefault(entity.getUuid(), 1.0f);
     }
     public static void doAbilityPull(PlayerEntity player, double range) {
-        if (!(player.getEntityWorld() instanceof ServerWorld world)) return;
+        if (!(player.getWorld() instanceof ServerWorld world)) return;
         Box box = player.getBoundingBox().expand(range);
         List<LivingEntity> entities = world.getEntitiesByClass(LivingEntity.class, box, entity -> entity != player && !entity.isRemoved());
-        Vec3d playerPos = player.getEntityPos();
+        Vec3d playerPos = player.getPos();
         spawnRing(world, playerPos.add(0, player.getHeight() / 2.0, 0), range, 0x4488FF);
         for (LivingEntity entity : entities) {
             float multiplier = getSpeedMultiplier(player, entity);
@@ -106,7 +106,7 @@ public class MagnetPullManager {
             if (entity instanceof ServerPlayerEntity serverPlayer) {
                 serverPlayer.networkHandler.sendPacket(new EntityVelocityUpdateS2CPacket(serverPlayer));
             }
-            Vec3d entityPosition = entity.getEntityPos().add(0, entity.getHeight() / 2.0, 0);
+            Vec3d entityPosition = entity.getPos().add(0, entity.getHeight() / 2.0, 0);
             for (int i = 0; i < 8; i++) {
                 double angle = (Math.PI * 2 / 8) * i;
                 world.spawnParticles(
@@ -121,15 +121,15 @@ public class MagnetPullManager {
                         0.05
                 );
             }
-            spawnSpiralAround(world, entity.getEntityPos(), playerPos);
+            spawnSpiralAround(world, entity.getPos(), playerPos);
         }
     }
 
     public static void doRepel(PlayerEntity player, double range, float damage) {
-        if (!(player.getEntityWorld() instanceof ServerWorld world)) return;
+        if (!(player.getWorld() instanceof ServerWorld world)) return;
         Box box = player.getBoundingBox().expand(range);
         List<LivingEntity> entities = world.getEntitiesByClass(LivingEntity.class, box, entity -> entity != player && !entity.isRemoved());
-        Vec3d playerPosition = player.getEntityPos();
+        Vec3d playerPosition = player.getPos();
         spawnRing(world, playerPosition.add(0, player.getHeight() / 2.0, 0), range, 0xFF4422);
         world.spawnParticles(ParticleTypes.EXPLOSION, playerPosition.x, playerPosition.y + 1, playerPosition.z, 3, 0.3, 0.3, 0.3, 0.1);
         world.spawnParticles(ParticleTypes.FLAME, playerPosition.x, playerPosition.y + 1, playerPosition.z, 20, 0.5, 0.5, 0.5, 0.15);
@@ -144,7 +144,7 @@ public class MagnetPullManager {
             if (entity instanceof ServerPlayerEntity serverPlayer) {
                 serverPlayer.networkHandler.sendPacket(new EntityVelocityUpdateS2CPacket(serverPlayer));
             }
-            Vec3d entityPosition = entity.getEntityPos().add(0, entity.getHeight() / 2.0, 0);
+            Vec3d entityPosition = entity.getPos().add(0, entity.getHeight() / 2.0, 0);
             Vec3d trail = away.multiply(-0.3);
             for (int i = 0; i < 6; i++) {
                 world.spawnParticles(
@@ -172,11 +172,11 @@ public class MagnetPullManager {
             for (PlayerEntity player : world.getPlayers()) {
                 boolean holdingWand = player.getMainHandStack().getItem() instanceof MagnetWandItem || player.getOffHandStack().getItem() instanceof MagnetWandItem;
                 if (!holdingWand) continue;
-                Vec3d playerPos = player.getEntityPos().add(0, player.getHeight() / 2.0, 0);
+                Vec3d playerPos = player.getPos().add(0, player.getHeight() / 2.0, 0);
                 Box box = player.getBoundingBox().expand(PASSIVE_RANGE);
                 world.getEntitiesByClass(ItemEntity.class, box, entity -> !entity.isRemoved()).forEach(item -> {
                     item.setPickupDelay(0);
-                    Vec3d toward = playerPos.subtract(item.getEntityPos());
+                    Vec3d toward = playerPos.subtract(item.getPos());
                     double dist = toward.length();
                     if (dist < 0.5) return;
                     double speed = Math.min(PASSIVE_SPEED, 0.15 + dist * 0.05);
@@ -197,7 +197,7 @@ public class MagnetPullManager {
                     }
                 });
                 world.getEntitiesByClass(ExperienceOrbEntity.class, box, entity -> !entity.isRemoved()).forEach(orb -> {
-                    Vec3d toward = playerPos.subtract(orb.getEntityPos());
+                    Vec3d toward = playerPos.subtract(orb.getPos());
                     double dist = toward.length();
                     if (dist < 0.5) return;
                     double speed = Math.min(PASSIVE_SPEED, 0.15 + dist * 0.05);

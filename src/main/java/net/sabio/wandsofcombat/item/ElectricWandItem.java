@@ -48,12 +48,12 @@ public class ElectricWandItem extends Item {
 
     @Override
     public void postHit(ItemStack stack, LivingEntity target, LivingEntity attacker) {
-        if (attacker instanceof PlayerEntity player && !attacker.getEntityWorld().isClient()) {
+        if (attacker instanceof PlayerEntity player && !attacker.getWorld().isClient()) {
             UUID uuid = player.getUuid();
             int hits = hitCounters.getOrDefault(uuid, 0) + 1;
             if (hits >= 3) {
                 hitCounters.put(uuid, 0);
-                strikeLightningOn(target, (ServerWorld) attacker.getEntityWorld());
+                strikeLightningOn(target, (ServerWorld) attacker.getWorld());
             } else {
                 hitCounters.put(uuid, hits);
             }
