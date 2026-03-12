@@ -192,7 +192,7 @@ public class PhantomModeHandler {
                 double y = pull.startPos.y + (pull.endPos.y - pull.startPos.y) * t;
                 double z = pull.startPos.z + (pull.endPos.z - pull.startPos.z) * t;
                 pull.attacker.teleport(
-                        pull.attacker.getWorld(),
+                        (ServerWorld) pull.attacker.getWorld(),
                         x,
                         y,
                         z,

@@ -235,7 +235,9 @@ public class MagmaWandHandler {
             passiveAbsorptionGiven.remove(uuid);
             abilityEndTimes.remove(uuid);
             ultimateEndTimes.remove(uuid);
-            removeFireRing(handler.player, handler.player.getWorld());
+            if (handler.player.getWorld() instanceof ServerWorld serverWorld) {
+                removeFireRing(handler.player, serverWorld);
+            }
             fireRingBlocks.remove(uuid);
             ultimateCooldownEndTimes.remove(uuid);
             MagmaWandItem.hitCounters.remove(uuid);
@@ -259,7 +261,7 @@ public class MagmaWandHandler {
         if (!(player instanceof ServerPlayerEntity serverPlayer)) return;
         if (serverPlayer.getItemCooldownManager().isCoolingDown(player.getMainHandStack()) || serverPlayer.getItemCooldownManager().isCoolingDown(player.getOffHandStack())) return;
         UUID uuid = player.getUuid();
-        ServerWorld world = serverPlayer.getWorld();
+        ServerWorld world = (ServerWorld) serverPlayer.getWorld();
         abilityEndTimes.put(uuid, world.getTime() + MagmaWandItem.ABILITY_DURATION);
         player.addStatusEffect(new StatusEffectInstance(
                 StatusEffects.FIRE_RESISTANCE,
@@ -280,7 +282,7 @@ public class MagmaWandHandler {
         long currentTick = serverPlayer.getWorld().getTime();
         Long cooldownEnd = ultimateCooldownEndTimes.get(uuid);
         if (cooldownEnd != null && currentTick < cooldownEnd) return;
-        ServerWorld world = serverPlayer.getWorld();
+        ServerWorld world = (ServerWorld) serverPlayer.getWorld();
         ultimateEndTimes.put(uuid, world.getTime() + MagmaWandItem.ULTIMATE_DURATION);
         buildFireRing(player, world);
         ItemStack wandStack = player.getMainHandStack().getItem() instanceof MagmaWandItem ? player.getMainHandStack() : player.getOffHandStack();
