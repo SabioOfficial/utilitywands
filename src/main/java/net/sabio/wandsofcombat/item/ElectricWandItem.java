@@ -1,19 +1,18 @@
 package net.sabio.wandsofcombat.item;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LightningEntity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ToolMaterial;
-import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.Box;
-import net.minecraft.world.World;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LightningBolt;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ToolMaterial;
+import net.minecraft.world.level.Level;
 
 import java.util.HashMap;
 import java.util.List;
@@ -28,8 +27,8 @@ public class ElectricWandItem extends Item {
     private static final int LIGHTNING_COUNT = 3;
     private static final Map<UUID, Integer> hitCounters = new HashMap<>();
 
-    public ElectricWandItem(Settings settings) {
-        super(ToolMaterial.DIAMOND.applyToolSettings(
+    public ElectricWandItem(Properties settings) {
+        super(ToolMaterial.DIAMOND.applyToolProperties(
                 settings,
                 BlockTags.SWORD_EFFICIENT,
                 ATTACK_DAMAGE_BONUS,
@@ -38,33 +37,33 @@ public class ElectricWandItem extends Item {
         ));
     }
 
-    public static void strikeLightningOn(Entity target, ServerWorld world) {
-        LightningEntity lightning = new LightningEntity(EntityType.LIGHTNING_BOLT, world);
-        lightning.setPosition(target.getX(), target.getY(), target.getZ());
-        lightning.setCosmetic(true);
-        world.spawnEntity(lightning);
-        target.damage(world, world.getDamageSources().lightningBolt(), 5.0f);
+    public static void strikeLightningOn(Entity target, ServerLevel world) {
+        LightningBolt lightning = new LightningBolt(EntityType.LIGHTNING_BOLT, world);
+        lightning.snapTo(target.getX(), target.getY(), target.getZ());
+        lightning.setVisualOnly(true);
+        world.addFreshEntity(lightning);
+        target.hurtServer(world, world.damageSources().lightningBolt(), 5.0f);
     }
 
     @Override
-    public void postHit(ItemStack stack, LivingEntity target, LivingEntity attacker) {
-        if (attacker instanceof PlayerEntity player && !attacker.getEntityWorld().isClient()) {
-            UUID uuid = player.getUuid();
+    public void postHurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
+        if (attacker instanceof Player player && !attacker.level().isClientSide()) {
+            UUID uuid = player.getUUID();
             int hits = hitCounters.getOrDefault(uuid, 0) + 1;
             if (hits >= 3) {
                 hitCounters.put(uuid, 0);
-                strikeLightningOn(target, (ServerWorld) attacker.getEntityWorld());
+                strikeLightningOn(target, (ServerLevel) attacker.level());
             } else {
                 hitCounters.put(uuid, hits);
             }
         }
-        super.postHit(stack, target, attacker);
+        super.postHurtEnemy(stack, target, attacker);
     }
 
     @Override
-    public ActionResult use(World world, PlayerEntity player, Hand hand) {
-        ItemStack stack = player.getStackInHand(hand);
-        if (player.getItemCooldownManager().isCoolingDown(stack)) return ActionResult.FAIL;
+    public InteractionResult use(Level world, Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (player.getCooldowns().isOnCooldown(stack)) return InteractionResult.FAIL;
         if (!world.isClient()) {
             ServerWorld serverWorld = (ServerWorld) world;
             player.getItemCooldownManager().set(stack, COOLDOWN_DURATION);
