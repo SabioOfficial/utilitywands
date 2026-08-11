@@ -24,7 +24,7 @@ public class PhantomSyncClient implements ClientModInitializer {
         });
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null) return;
-            if (PhantomWandItem.phantomPlayers.contains(client.player.getUuid())) {
+            if (PhantomWandItem.phantomPlayers.contains(client.player.getUUID())) {
                 client.player.noClip = true;
             }
         });

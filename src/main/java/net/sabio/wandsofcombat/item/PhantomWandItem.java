@@ -1,12 +1,12 @@
 package net.sabio.wandsofcombat.item;
 
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.Player;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ToolMaterial;
 import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.world.ServerLevel;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.world.World;
@@ -32,16 +32,16 @@ public class PhantomWandItem extends Item {
         ));
     }
     @Override
-    public ActionResult use(World world, PlayerEntity player, Hand hand) {
+    public ActionResult use(World world, Player player, Hand hand) {
         ItemStack stack = player.getStackInHand(hand);
         if (player.getItemCooldownManager().isCoolingDown(stack)) {
             return ActionResult.FAIL;
         }
         if (!world.isClient()) {
             player.getItemCooldownManager().set(stack, ABILITY_COOLDOWN);
-            assert ((ServerWorld) world).getServer() != null;
-            WandCooldownState.get(((ServerWorld)world).getServer()).save(player.getUuid(), "phantom", ABILITY_COOLDOWN);
-            PhantomModeHandler.activatePhantomMode(player, (ServerWorld) world);
+            assert ((ServerLevel) world).getServer() != null;
+            WandCooldownState.get(((ServerLevel)world).getServer()).save(player.getUUID(), "phantom", ABILITY_COOLDOWN);
+            PhantomModeHandler.activatePhantomMode(player, (ServerLevel) world);
         }
 
         return ActionResult.SUCCESS;

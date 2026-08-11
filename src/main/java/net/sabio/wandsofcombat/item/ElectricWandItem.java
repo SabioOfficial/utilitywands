@@ -13,6 +13,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ToolMaterial;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 
 import java.util.HashMap;
 import java.util.List;
@@ -64,17 +65,17 @@ public class ElectricWandItem extends Item {
     public InteractionResult use(Level world, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         if (player.getCooldowns().isOnCooldown(stack)) return InteractionResult.FAIL;
-        if (!world.isClient()) {
-            ServerWorld serverWorld = (ServerWorld) world;
-            player.getItemCooldownManager().set(stack, COOLDOWN_DURATION);
-            assert serverWorld.getServer() != null;
-            WandCooldownState.get(serverWorld.getServer()).save(player.getUuid(), "electric", COOLDOWN_DURATION);
-            Box box = player.getBoundingBox().expand(ABILITY_RANGE);
-            List<LivingEntity> targets = world.getEntitiesByClass(LivingEntity.class, box, entity -> entity != player && !entity.isRemoved());
+        if (!world.isClientSide()) {
+            ServerLevel ServerLevel = (ServerLevel) world;
+            player.getCooldowns().addCooldown(stack, COOLDOWN_DURATION);
+            assert ServerLevel.getServer() != null;
+            WandCooldownState.get(ServerLevel.getServer()).save(player.getUUID(), "electric", COOLDOWN_DURATION);
+            AABB box = player.getBoundingBox().inflate(ABILITY_RANGE);
+            List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, box, entity -> entity != player && !entity.isRemoved());
             if (!targets.isEmpty()) {
-                ElectricWandLightningHandler.scheduleAbility(serverWorld, player, targets, LIGHTNING_COUNT);
+                ElectricWandLightningHandler.scheduleAbility(ServerLevel, player, targets, LIGHTNING_COUNT);
             }
         }
-        return ActionResult.SUCCESS;
+        return InteractionResult.SUCCESS;
     }
 }

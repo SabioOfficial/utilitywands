@@ -5,14 +5,14 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.entity.ExperienceOrbEntity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.Player;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.s2c.play.EntityVelocityUpdateS2CPacket;
 import net.minecraft.particle.DustParticleEffect;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.network.ServerPlayer;
+import net.minecraft.server.world.ServerLevel;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 
@@ -28,7 +28,7 @@ public class MagnetPullManager {
     private static final Map<UUID, Map<UUID, Float>> speedMultipliers = new HashMap<>();
     private static long lastResetTick = 0;
 
-    private static void spawnRing(ServerWorld world, Vec3d center, double radius, int color) {
+    private static void spawnRing(ServerLevel world, Vec3d center, double radius, int color) {
         int points = 32;
         DustParticleEffect dustParticleEffect = new DustParticleEffect(color, 1.2f);
         for (int i = 0; i < points; i++) {
@@ -39,7 +39,7 @@ public class MagnetPullManager {
         }
     }
 
-    private static void spawnSpiralAround(ServerWorld world, Vec3d from, Vec3d to) {
+    private static void spawnSpiralAround(ServerLevel world, Vec3d from, Vec3d to) {
         int steps = 12;
         for (int i = 0; i < steps; i++) {
             double t = (double) i / steps;
@@ -58,11 +58,11 @@ public class MagnetPullManager {
         }
     }
 
-    public static boolean isRepelMode(PlayerEntity player) {
-        return repelModeActive.contains(player.getUuid());
+    public static boolean isRepelMode(Player player) {
+        return repelModeActive.contains(player.getUUID());
     }
-    public static void toggleRepelMode(PlayerEntity player) {
-        UUID uuid = player.getUuid();
+    public static void toggleRepelMode(Player player) {
+        UUID uuid = player.getUUID();
         boolean nowRepel = !repelModeActive.remove(uuid);
         if (nowRepel) repelModeActive.add(uuid);
         ItemStack stack = player.getMainHandStack();
@@ -74,9 +74,9 @@ public class MagnetPullManager {
             }
         }
     }
-    public static void recordHit(PlayerEntity attacker, LivingEntity target) {
-        UUID attackerUuid = attacker.getUuid();
-        UUID targetUuid = target.getUuid();
+    public static void recordHit(Player attacker, LivingEntity target) {
+        UUID attackerUuid = attacker.getUUID();
+        UUID targetUuid = target.getUUID();
         Map<UUID, Integer> hits = comboHits.computeIfAbsent(attackerUuid, uuid -> new HashMap<>());
         int current = hits.getOrDefault(targetUuid, 0) + 1;
         if (current >= 3) {
@@ -87,13 +87,13 @@ public class MagnetPullManager {
             hits.put(targetUuid, current);
         }
     }
-    private static float getSpeedMultiplier(PlayerEntity player, LivingEntity entity) {
-        Map<UUID, Float> multipliers = speedMultipliers.get(player.getUuid());
+    private static float getSpeedMultiplier(Player player, LivingEntity entity) {
+        Map<UUID, Float> multipliers = speedMultipliers.get(player.getUUID());
         if (multipliers == null) return 1.0f;
-        return multipliers.getOrDefault(entity.getUuid(), 1.0f);
+        return multipliers.getOrDefault(entity.getUUID(), 1.0f);
     }
-    public static void doAbilityPull(PlayerEntity player, double range) {
-        if (!(player.getEntityWorld() instanceof ServerWorld world)) return;
+    public static void doAbilityPull(Player player, double range) {
+        if (!(player.getEntityWorld() instanceof ServerLevel world)) return;
         Box box = player.getBoundingBox().expand(range);
         List<LivingEntity> entities = world.getEntitiesByClass(LivingEntity.class, box, entity -> entity != player && !entity.isRemoved());
         Vec3d playerPos = player.getEntityPos();
@@ -101,9 +101,9 @@ public class MagnetPullManager {
         for (LivingEntity entity : entities) {
             float multiplier = getSpeedMultiplier(player, entity);
             Vec3d toward = new Vec3d(playerPos.x - entity.getX(), 0, playerPos.z - entity.getZ()).normalize();
-            entity.setVelocity(toward.multiply(1.5 * multiplier).add(0, 0.2, 0));
-            entity.velocityDirty = true;
-            if (entity instanceof ServerPlayerEntity serverPlayer) {
+            entity.setDeltaMovement(toward.multiply(1.5 * multiplier).add(0, 0.2, 0));
+            entity.hurtMarked = true;
+            if (entity instanceof ServerPlayer serverPlayer) {
                 serverPlayer.networkHandler.sendPacket(new EntityVelocityUpdateS2CPacket(serverPlayer));
             }
             Vec3d entityPosition = entity.getEntityPos().add(0, entity.getHeight() / 2.0, 0);
@@ -125,8 +125,8 @@ public class MagnetPullManager {
         }
     }
 
-    public static void doRepel(PlayerEntity player, double range, float damage) {
-        if (!(player.getEntityWorld() instanceof ServerWorld world)) return;
+    public static void doRepel(Player player, double range, float damage) {
+        if (!(player.getEntityWorld() instanceof ServerLevel world)) return;
         Box box = player.getBoundingBox().expand(range);
         List<LivingEntity> entities = world.getEntitiesByClass(LivingEntity.class, box, entity -> entity != player && !entity.isRemoved());
         Vec3d playerPosition = player.getEntityPos();
@@ -139,9 +139,9 @@ public class MagnetPullManager {
             if (away.horizontalLength() < 0.01) away = new Vec3d(1, 0, 0);
             away = away.normalize();
             entity.damage(world, world.getDamageSources().magic(), damage);
-            entity.setVelocity(away.x * 2.0 * multiplier, 0.4, away.z * 2.0 * multiplier);
-            entity.velocityDirty = true;
-            if (entity instanceof ServerPlayerEntity serverPlayer) {
+            entity.setDeltaMovement(away.x * 2.0 * multiplier, 0.4, away.z * 2.0 * multiplier);
+            entity.hurtMarked = true;
+            if (entity instanceof ServerPlayer serverPlayer) {
                 serverPlayer.networkHandler.sendPacket(new EntityVelocityUpdateS2CPacket(serverPlayer));
             }
             Vec3d entityPosition = entity.getEntityPos().add(0, entity.getHeight() / 2.0, 0);
@@ -162,14 +162,14 @@ public class MagnetPullManager {
         }
     }
     private static void onTick(MinecraftServer server) {
-        for (ServerWorld world : server.getWorlds()) {
+        for (ServerLevel world : server.getWorlds()) {
             long currentTick = world.getTime();
             if (currentTick - lastResetTick >= COMBO_RESET_INTERVAL) {
                 lastResetTick = currentTick;
                 comboHits.clear();
                 speedMultipliers.clear();
             }
-            for (PlayerEntity player : world.getPlayers()) {
+            for (Player player : world.getPlayers()) {
                 boolean holdingWand = player.getMainHandStack().getItem() instanceof MagnetWandItem || player.getOffHandStack().getItem() instanceof MagnetWandItem;
                 if (!holdingWand) continue;
                 Vec3d playerPos = player.getEntityPos().add(0, player.getHeight() / 2.0, 0);
@@ -180,8 +180,8 @@ public class MagnetPullManager {
                     double dist = toward.length();
                     if (dist < 0.5) return;
                     double speed = Math.min(PASSIVE_SPEED, 0.15 + dist * 0.05);
-                    item.setVelocity(toward.normalize().multiply(speed));
-                    item.velocityDirty = true;
+                    item.setDeltaMovement(toward.normalize().multiply(speed));
+                    item.hurtMarked = true;
                     if (currentTick % 3 == 0) {
                         world.spawnParticles(
                                 ParticleTypes.ENCHANT,
@@ -201,8 +201,8 @@ public class MagnetPullManager {
                     double dist = toward.length();
                     if (dist < 0.5) return;
                     double speed = Math.min(PASSIVE_SPEED, 0.15 + dist * 0.05);
-                    orb.setVelocity(toward.normalize().multiply(speed));
-                    orb.velocityDirty = true;
+                    orb.setDeltaMovement(toward.normalize().multiply(speed));
+                    orb.hurtMarked = true;
                     if (currentTick % 3 == 0) {
                         world.spawnParticles(
                                 ParticleTypes.HAPPY_VILLAGER,
@@ -224,7 +224,7 @@ public class MagnetPullManager {
         ServerTickEvents.END_SERVER_TICK.register(MagnetPullManager::onTick);
         MagnetTogglePacket.initializeServer();
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
-            UUID uuid = handler.player.getUuid();
+            UUID uuid = handler.player.getUUID();
             repelModeActive.remove(uuid);
             comboHits.remove(uuid);
             speedMultipliers.remove(uuid);

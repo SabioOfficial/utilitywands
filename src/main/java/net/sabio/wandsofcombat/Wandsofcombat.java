@@ -27,9 +27,9 @@ public class Wandsofcombat implements ModInitializer {
         MagmaWandHandler.initialize();
         IceWandComboHandler.initialize();
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
-            net.minecraft.server.network.ServerPlayerEntity player = handler.player;
+            net.minecraft.server.network.ServerPlayer player = handler.player;
             WandCooldownState state = WandCooldownState.get(server);
-            UUID id = player.getUuid();
+            UUID id = player.getUUID();
             for (String key : new String[]{"magnet","ice","electric","phantom","magma_ability","magma_ultimate"}) {
                 int ticks = state.getRemainingTicks(id, key);
                 if (ticks > 0) {

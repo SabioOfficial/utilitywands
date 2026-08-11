@@ -2,17 +2,17 @@ package net.sabio.wandsofcombat.item;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.minecraft.entity.*;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.mob.SkeletonEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.projectile.ArrowEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.monster.skeleton.Skeleton;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.arrow.Arrow;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.entity.EntityTypeTest;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
@@ -28,11 +28,11 @@ public class ElectricWandLightningHandler {
     private static final Map<UUID, Object[]> pendingSkeletonData = new HashMap<>();
     private static final int STUN_DURATION = 8; // 1.5 seconds
     private static final int SKELETON_LIFETIME = 160; // 8 seconds
-    private static void scheduleSkeletonSpawn(ServerWorld world, PlayerEntity summoner, LivingEntity target, long currentTick) {
+    private static void scheduleSkeletonSpawn(ServerLevel world, Player summoner, LivingEntity target, long currentTick) {
         UUID key = UUID.randomUUID();
         pendingSkeletonData.put(key, new Object[]{world, summoner, target, currentTick + 40});
     }
-    private static void clearAllTargetGoals(SkeletonEntity skeleton) {
+    private static void clearAllTargetGoals(Skeleton skeleton) {
         try {
             Field tsField = null;
             Class<?> aClass = skeleton.getClass();
@@ -66,30 +66,30 @@ public class ElectricWandLightningHandler {
             }
         } catch (Exception ignored) {}
     }
-    private static void doSpawnSkeleton(ServerWorld world, PlayerEntity summoner, LivingEntity target, long currentTick) {
-        SkeletonEntity skeleton = new SkeletonEntity(EntityType.SKELETON, world);
-        skeleton.refreshPositionAndAngles(target.getX(), target.getY(), target.getZ(), summoner.getYaw(), 0);
-        skeleton.initialize(world, world.getLocalDifficulty(skeleton.getBlockPos()), SpawnReason.MOB_SUMMONED, null);
-        world.spawnEntity(skeleton);
+    private static void doSpawnSkeleton(ServerLevel world, Player summoner, LivingEntity target, long currentTick) {
+        Skeleton skeleton = new Skeleton(EntityType.SKELETON, world);
+        skeleton.snapTo(target.getX(), target.getY(), target.getZ(), summoner.getYRot(), 0);
+        skeleton.finalizeSpawn(world, world.getCurrentDifficultyAt(skeleton.blockPosition()), EntitySpawnReason.MOB_SUMMONED, null);
+        world.addFreshEntity(skeleton);
         clearAllTargetGoals(skeleton);
-        skeleton.equipStack(EquipmentSlot.MAINHAND, new ItemStack(Items.STONE_SWORD));
+        skeleton.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.STONE_SWORD));
         skeleton.setTarget(target);
-        summonedSkeletons.put(skeleton.getUuid(), summoner.getUuid());
-        skeletonTargets.put(skeleton.getUuid(), target);
-        skeletonSpawnTimes.put(skeleton.getUuid(), currentTick);
-        skeletonDespawnTimes.put(skeleton.getUuid(), currentTick + SKELETON_LIFETIME);
-        skeletonNextAttackTick.put(skeleton.getUuid(), currentTick + 20);
+        summonedSkeletons.put(skeleton.getUUID(), summoner.getUUID());
+        skeletonTargets.put(skeleton.getUUID(), target);
+        skeletonSpawnTimes.put(skeleton.getUUID(), currentTick);
+        skeletonDespawnTimes.put(skeleton.getUUID(), currentTick + SKELETON_LIFETIME);
+        skeletonNextAttackTick.put(skeleton.getUUID(), currentTick + 20);
         skeleton.setTarget(target);
     }
     private static class AbilityBurst {
-        final ServerWorld world;
-        final PlayerEntity player;
+        final ServerLevel world;
+        final Player player;
         final List<LivingEntity> targets;
         final int totalStrikes;
         int strikesFired = 0;
         int tickTimer = 0;
         static final int INTERVAL = 10;
-        AbilityBurst(ServerWorld world, PlayerEntity player, List<LivingEntity> targets, int totalStrikes) {
+        AbilityBurst(ServerLevel world, Player player, List<LivingEntity> targets, int totalStrikes) {
             this.world = world;
             this.player = player;
             this.targets = targets;
@@ -104,21 +104,21 @@ public class ElectricWandLightningHandler {
             for (LivingEntity target : targets) {
                 if (target.isRemoved()) continue;
                 ElectricWandItem.strikeLightningOn(target, world);
-                target.addStatusEffect(new StatusEffectInstance(
-                        StatusEffects.SLOWNESS,
+                target.addEffect(new MobEffectInstance(
+                        MobEffects.SLOWNESS,
                         STUN_DURATION,
                         127,
                         false,
                         false,
                         false
                 ));
-                target.setVelocity(0, target.getVelocity().y, 0);
-                target.velocityDirty = true;
-                if (target instanceof MobEntity mob) {
-                    mob.setAttacking(false);
+                target.setDeltaMovement(0, target.getDeltaMovement().y, 0);
+                target.hurtMarked = true;
+                if (target instanceof Mob mob) {
+                    mob.setAggressive(false);
                     mob.setTarget(null);
                 }
-                stunnedEntities.put(target.getUuid(), currentTick + STUN_DURATION);
+                stunnedEntities.put(target.getUUID(), currentTick + STUN_DURATION);
             }
             strikesFired++;
             tickTimer = INTERVAL;
@@ -136,18 +136,17 @@ public class ElectricWandLightningHandler {
     public static void initialize() {
         ServerTickEvents.START_SERVER_TICK.register(ElectricWandLightningHandler::onTick);
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
-            UUID playerUuid = handler.player.getUuid();
+            UUID playerUuid = handler.player.getUUID();
             List<UUID> toKill = new ArrayList<>();
             for (Map.Entry<UUID, UUID> entry : summonedSkeletons.entrySet()) {
                 if (entry.getValue().equals(playerUuid)) {
                     toKill.add(entry.getKey());
                 }
             }
-            for (ServerWorld world : server.getWorlds()) {
-                List<Entity> snap = new ArrayList<>();
-                world.iterateEntities().forEach(snap::add);
+            for (ServerLevel world : server.getAllLevels()) {
+                List<Entity> snap = new ArrayList<>(world.getEntities(EntityTypeTest.forClass(Entity.class), _ -> true));
                 for (Entity entity : snap) {
-                    if (toKill.contains(entity.getUuid())) {
+                    if (toKill.contains(entity.getUUID())) {
                         entity.discard();
                     }
                 }
@@ -162,17 +161,17 @@ public class ElectricWandLightningHandler {
         });
     }
     private static void onTick(MinecraftServer server) {
-        for (ServerWorld world : server.getWorlds()) {
-            long currentTick = world.getTime();
+        for (ServerLevel world : server.getAllLevels()) {
+            long currentTick = world.getGameTime();
             pendingSkeletonData.entrySet().removeIf(entry -> {
                 Object[] data = entry.getValue();
-                ServerWorld serverWorld = (ServerWorld) data[0];
-                PlayerEntity summoner = (PlayerEntity) data[1];
+                ServerLevel ServerLevel = (ServerLevel) data[0];
+                Player summoner = (Player) data[1];
                 LivingEntity target = (LivingEntity) data[2];
                 long spawnAt = (long) data[3];
                 if (currentTick < spawnAt) return false;
-                if (!target.isDead() && !target.isRemoved()) {
-                    doSpawnSkeleton(serverWorld, summoner, target, currentTick);
+                if (target.isAlive() && !target.isRemoved()) {
+                    doSpawnSkeleton(ServerLevel, summoner, target, currentTick);
                 }
                 return true;
             });
@@ -187,32 +186,30 @@ public class ElectricWandLightningHandler {
                 return false;
             });
             if (!expiredStuns.isEmpty()) {
-                List<Entity> snapshot = new ArrayList<>();
-                world.iterateEntities().forEach(snapshot::add);
+                List<Entity> snapshot = new ArrayList<>(world.getEntities(EntityTypeTest.forClass(Entity.class), _ -> true));
                 for (Entity entity : snapshot) {
-                    if (!(entity instanceof MobEntity mob)) continue;
-                    if (expiredStuns.contains(mob.getUuid())) {
-                        mob.setAiDisabled(false);
+                    if (!(entity instanceof Mob mob)) continue;
+                    if (expiredStuns.contains(mob.getUUID())) {
+                        mob.setNoAi(false);
                     }
                 }
             }
             List<UUID> toRemove = new ArrayList<>();
             List<Map.Entry<UUID, Long>> snapshot = new ArrayList<>(skeletonDespawnTimes.entrySet());
-            List<Entity> worldEntities = new ArrayList<>();
-            world.iterateEntities().forEach(worldEntities::add);
+            List<Entity> worldEntities = new ArrayList<>(world.getEntities(EntityTypeTest.forClass(Entity.class), _ -> true));
             for (Map.Entry<UUID, Long> entry : snapshot) {
                 UUID skeletonId = entry.getKey();
                 long despawnAt = entry.getValue();
-                SkeletonEntity skeletonRef = null;
+                Skeleton skeletonRef = null;
                 for (Entity entity : worldEntities) {
-                    if (entity.getUuid().equals(skeletonId) && entity instanceof SkeletonEntity skeleton) {
+                    if (entity.getUUID().equals(skeletonId) && entity instanceof Skeleton skeleton) {
                         skeletonRef = skeleton;
                         break;
                     }
                 }
                 if (skeletonRef == null) continue;
                 LivingEntity target = skeletonTargets.get(skeletonId);
-                boolean targetGone = target == null || target.isRemoved() || target.isDead();
+                boolean targetGone = target == null || target.isRemoved() || !target.isAlive();
                 boolean expired = currentTick >= despawnAt;
                 if (targetGone || expired) {
                     skeletonRef.discard();
@@ -231,23 +228,23 @@ public class ElectricWandLightningHandler {
         }
     }
 
-    private static @NotNull ArrowEntity getArrowEntity(ServerWorld world, SkeletonEntity skeleton, LivingEntity originalTarget) {
-        ArrowEntity arrow = new ArrowEntity(world, skeleton, new ItemStack(Items.ARROW), null);
+    private static @NotNull Arrow getArrow(ServerLevel world, Skeleton skeleton, LivingEntity originalTarget) {
+        Arrow arrow = new Arrow(world, skeleton, new ItemStack(Items.ARROW), null);
         double aimDx = originalTarget.getX() - skeleton.getX();
-        double aimDy = originalTarget.getY() + originalTarget.getHeight() / 2.0 - skeleton.getY() - skeleton.getHeight() / 2.0;
+        double aimDy = originalTarget.getY() + originalTarget.getBbHeight() / 2.0 - skeleton.getY() - skeleton.getBbHeight() / 2.0;
         double aimDz = originalTarget.getZ() - skeleton.getZ();
-        arrow.setVelocity(aimDx, aimDy, aimDz, 1.6f, 1.0f);
-        arrow.setPosition(skeleton.getX(), skeleton.getY() + skeleton.getHeight() / 2.0, skeleton.getZ());
+        arrow.shoot(aimDx, aimDy, aimDz, 1.6f, 1.0f);
+        arrow.setPos(skeleton.getX(), skeleton.getY() + skeleton.getBbHeight() / 2.0, skeleton.getZ());
         return arrow;
     }
 
-    public static void scheduleBurst(ServerWorld world, PlayerEntity player, List<LivingEntity> targets, int burstCount) {
+    public static void scheduleBurst(ServerLevel world, Player player, List<LivingEntity> targets, int burstCount) {
         pendingBursts.add(new AbilityBurst(world, player, new ArrayList<>(targets), burstCount));
     }
-    public static void scheduleBurst(ServerWorld world, PlayerEntity player, List<LivingEntity> targets, Map<LivingEntity, Float> healthBefore, int burstCount, int followupCount, float damageThreshold, double followupRadius, int interval) {
+    public static void scheduleBurst(ServerLevel world, Player player, List<LivingEntity> targets, Map<LivingEntity, Float> healthBefore, int burstCount, int followupCount, float damageThreshold, double followupRadius, int interval) {
         scheduleBurst(world, player, targets, burstCount);
     }
-    public static void scheduleAbility(ServerWorld world, PlayerEntity player, List<LivingEntity> targets, int strikes) {
+    public static void scheduleAbility(ServerLevel world, Player player, List<LivingEntity> targets, int strikes) {
         scheduleBurst(world, player, targets, strikes);
     }
 }

@@ -6,15 +6,15 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.effect.MobEffectInstance;
+import net.minecraft.entity.effect.MobEffects;
+import net.minecraft.entity.player.Player;
 import net.minecraft.item.ItemStack;
 import net.minecraft.particle.DustParticleEffect;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.network.ServerPlayer;
+import net.minecraft.server.world.ServerLevel;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
@@ -37,8 +37,8 @@ public class MagmaWandHandler {
     private static final double FIRE_RING_RADIUS = 4.0; // how far the fire ring extends
     private static final int GROUND_SCAN_RANGE = 5;
 
-    private static void triggerPassiveKnockback(PlayerEntity player) {
-        if (!(player.getEntityWorld() instanceof ServerWorld world)) return;
+    private static void triggerPassiveKnockback(Player player) {
+        if (!(player.getEntityWorld() instanceof ServerLevel world)) return;
         Box box = player.getBoundingBox().expand(KNOCKBACK_RADIUS);
         List<LivingEntity> nearby = world.getEntitiesByClass(LivingEntity.class, box, entity -> entity != player && !entity.isRemoved());
         for (LivingEntity entity : nearby) {
@@ -53,8 +53,8 @@ public class MagmaWandHandler {
                     -away.z
             );
             entity.addVelocity(0, 0.3, 0);
-            entity.velocityDirty = true;
-            if (entity instanceof ServerPlayerEntity serverTarget) {
+            entity.hurtMarked = true;
+            if (entity instanceof ServerPlayer serverTarget) {
                 serverTarget.networkHandler.sendPacket(new net.minecraft.network.packet.s2c.play.EntityVelocityUpdateS2CPacket(serverTarget));
             }
         }
@@ -99,25 +99,25 @@ public class MagmaWandHandler {
                 0.05
         );
     }
-    private static void applyPassiveBuffs(PlayerEntity player) {
-        player.addStatusEffect(new StatusEffectInstance(
-                StatusEffects.FIRE_RESISTANCE,
+    private static void applyPassiveBuffs(Player player) {
+        player.addStatusEffect(new MobEffectInstance(
+                MobEffects.FIRE_RESISTANCE,
                 1200,
                 0,
                 false,
                 true,
                 true
         ));
-        player.addStatusEffect(new StatusEffectInstance(
-                StatusEffects.STRENGTH,
+        player.addStatusEffect(new MobEffectInstance(
+                MobEffects.STRENGTH,
                 1200,
                 0,
                 false,
                 true,
                 true
         ));
-        player.addStatusEffect(new StatusEffectInstance(
-                StatusEffects.RESISTANCE,
+        player.addStatusEffect(new MobEffectInstance(
+                MobEffects.RESISTANCE,
                 1800,
                 0,
                 false,
@@ -126,9 +126,9 @@ public class MagmaWandHandler {
         ));
     }
     private static boolean onDamage(LivingEntity entity, DamageSource source, float amount) {
-        if (!(entity instanceof PlayerEntity player)) return true;
-        UUID uuid = player.getUuid();
-        if (source.getSource() != null && wandFireballEntities.contains(source.getSource().getUuid())) {
+        if (!(entity instanceof Player player)) return true;
+        UUID uuid = player.getUUID();
+        if (source.getSource() != null && wandFireballEntities.contains(source.getSource().getUUID())) {
             return false;
         }
         if (amount >= 1.0f) {
@@ -137,8 +137,8 @@ public class MagmaWandHandler {
         }
         return true;
     }
-    private static void checkPassiveAbsorption(PlayerEntity player, long currentTick) {
-        UUID uuid = player.getUuid();
+    private static void checkPassiveAbsorption(Player player, long currentTick) {
+        UUID uuid = player.getUUID();
         if (passiveAbsorptionGiven.containsKey(uuid)) return;
         if (!(player.getMainHandStack().getItem() instanceof MagmaWandItem) && !(player.getOffHandStack().getItem() instanceof MagmaWandItem)) return;
         long lastHit = lastDamageTick.containsKey(uuid) ? Math.min(lastDamageTick.get(uuid), currentTick) : currentTick;
@@ -150,9 +150,9 @@ public class MagmaWandHandler {
             }
             if (currentTick < grantAt) return;
             absorptionGrantTick.remove(uuid);
-            if (!(player instanceof ServerPlayerEntity serverPlayer)) return;
-            serverPlayer.addStatusEffect(new StatusEffectInstance(
-                    StatusEffects.ABSORPTION,
+            if (!(player instanceof ServerPlayer serverPlayer)) return;
+            serverPlayer.addStatusEffect(new MobEffectInstance(
+                    MobEffects.ABSORPTION,
                     Integer.MAX_VALUE,
                     0,
                     false,
@@ -161,12 +161,12 @@ public class MagmaWandHandler {
             ));
             passiveAbsorptionGiven.put(uuid, 4.0f);
             absorptionGrantedAt.put(uuid, currentTick);
-            if (player.getEntityWorld() instanceof ServerWorld serverWorld) {
+            if (player.getEntityWorld() instanceof ServerLevel ServerLevel) {
                 for (int i = 0; i < 16; i++) {
                     double angle = (2.0 * Math.PI / 16) * i;
                     double posX = player.getX() + 1.0 * Math.cos(angle);
                     double posZ = player.getZ() + 1.0 * Math.sin(angle);
-                    serverWorld.spawnParticles(
+                    ServerLevel.spawnParticles(
                             new DustParticleEffect(0xAB421C, 1.8f),
                             posX,
                             player.getY() + 1.0,
@@ -178,7 +178,7 @@ public class MagmaWandHandler {
                             0
                     );
                 }
-                serverWorld.spawnParticles(
+                ServerLevel.spawnParticles(
                         ParticleTypes.FLAME,
                         player.getX(),
                         player.getY() + 1.0,
@@ -194,8 +194,8 @@ public class MagmaWandHandler {
             absorptionGrantTick.remove(uuid);
         }
     }
-    private static void buildFireRing(PlayerEntity player, ServerWorld world) {
-        UUID uuid = player.getUuid();
+    private static void buildFireRing(Player player, ServerLevel world) {
+        UUID uuid = player.getUUID();
         Set<BlockPos> desired = computeRingPositions(player, world);
         Set<BlockPos> current = fireRingBlocks.getOrDefault(uuid, new HashSet<>());
         for (BlockPos position : current) {
@@ -217,7 +217,7 @@ public class MagmaWandHandler {
         ServerTickEvents.END_SERVER_TICK.register(MagmaWandHandler::onTick);
         ServerLivingEntityEvents.ALLOW_DAMAGE.register(MagmaWandHandler::onDamage);
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
-            UUID uuid = handler.player.getUuid();
+            UUID uuid = handler.player.getUUID();
             long joinTick = handler.player.getEntityWorld().getTime();
             lastDamageTick.put(uuid, joinTick + 40);
             WandCooldownState state = WandCooldownState.get(server);
@@ -230,7 +230,7 @@ public class MagmaWandHandler {
             }
         });
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
-            UUID uuid = handler.player.getUuid();
+            UUID uuid = handler.player.getUUID();
             lastDamageTick.remove(uuid);
             passiveAbsorptionGiven.remove(uuid);
             abilityEndTimes.remove(uuid);
@@ -243,26 +243,26 @@ public class MagmaWandHandler {
             absorptionGrantedAt.remove(uuid);
         });
     }
-    public static void launchFireball(PlayerEntity player, LivingEntity target) {
-        if (!(player.getEntityWorld() instanceof ServerWorld world)) return;
+    public static void launchFireball(Player player, LivingEntity target) {
+        if (!(player.getEntityWorld() instanceof ServerLevel world)) return;
         Vec3d direction = target.getEntityPos()
                 .add(0, target.getHeight() / 2.0, 0)
                 .subtract(player.getEyePos())
                 .normalize();
         MagmaWandFireballEntity fireball = new MagmaWandFireballEntity(world, player, direction);
         fireball.setPosition(player.getEyePos().x, player.getEyePos().y, player.getEyePos().z);
-        wandFireballEntities.add(fireball.getUuid());
-        world.spawnEntity(fireball);
-        fireballExpiryTimes.put(fireball.getUuid(), world.getTime() + 120);
+        wandFireballEntities.add(fireball.getUUID());
+        level.addFreshEntity(fireball);
+        fireballExpiryTimes.put(fireball.getUUID(), world.getTime() + 120);
     }
-    public static void tryActivateAbility(PlayerEntity player) {
-        if (!(player instanceof ServerPlayerEntity serverPlayer)) return;
+    public static void tryActivateAbility(Player player) {
+        if (!(player instanceof ServerPlayer serverPlayer)) return;
         if (serverPlayer.getItemCooldownManager().isCoolingDown(player.getMainHandStack()) || serverPlayer.getItemCooldownManager().isCoolingDown(player.getOffHandStack())) return;
-        UUID uuid = player.getUuid();
-        ServerWorld world = serverPlayer.getEntityWorld();
+        UUID uuid = player.getUUID();
+        ServerLevel world = serverPlayer.getEntityWorld();
         abilityEndTimes.put(uuid, world.getTime() + MagmaWandItem.ABILITY_DURATION);
-        player.addStatusEffect(new StatusEffectInstance(
-                StatusEffects.FIRE_RESISTANCE,
+        player.addStatusEffect(new MobEffectInstance(
+                MobEffects.FIRE_RESISTANCE,
                 MagmaWandItem.ABILITY_DURATION,
                 0,
                 false,
@@ -273,21 +273,21 @@ public class MagmaWandHandler {
         serverPlayer.getItemCooldownManager().set(wandStack, MagmaWandItem.ABILITY_COOLDOWN + MagmaWandItem.ABILITY_DURATION);
         WandCooldownState.get(Objects.requireNonNull(serverPlayer.getEntityWorld().getServer())).save(uuid, "magma_ability", MagmaWandItem.ABILITY_COOLDOWN + MagmaWandItem.ABILITY_DURATION);
     }
-    public static void tryActivateUltimate(PlayerEntity player) {
-        if (!(player instanceof ServerPlayerEntity serverPlayer)) return;
-        UUID uuid = player.getUuid();
+    public static void tryActivateUltimate(Player player) {
+        if (!(player instanceof ServerPlayer serverPlayer)) return;
+        UUID uuid = player.getUUID();
         if (ultimateEndTimes.containsKey(uuid)) return;
         long currentTick = serverPlayer.getEntityWorld().getTime();
         Long cooldownEnd = ultimateCooldownEndTimes.get(uuid);
         if (cooldownEnd != null && currentTick < cooldownEnd) return;
-        ServerWorld world = serverPlayer.getEntityWorld();
+        ServerLevel world = serverPlayer.getEntityWorld();
         ultimateEndTimes.put(uuid, world.getTime() + MagmaWandItem.ULTIMATE_DURATION);
         buildFireRing(player, world);
         ItemStack wandStack = player.getMainHandStack().getItem() instanceof MagmaWandItem ? player.getMainHandStack() : player.getOffHandStack();
         serverPlayer.getItemCooldownManager().set(wandStack, MagmaWandItem.ULTIMATE_DURATION + MagmaWandItem.ULTIMATE_COOLDOWN);
         WandCooldownState.get(Objects.requireNonNull(serverPlayer.getEntityWorld().getServer())).save(uuid, "magma_ultimate", MagmaWandItem.ULTIMATE_DURATION + MagmaWandItem.ULTIMATE_COOLDOWN);
     }
-    private static Set<BlockPos> computeRingPositions(PlayerEntity player, ServerWorld world) {
+    private static Set<BlockPos> computeRingPositions(Player player, ServerLevel world) {
         Set<BlockPos> positions = new HashSet<>();
         int steps = 36;
         for (int i = 0; i < steps; i++) {
@@ -303,15 +303,15 @@ public class MagmaWandHandler {
         }
         return positions;
     }
-    private static void updateFireRing(PlayerEntity player, ServerWorld world) {
+    private static void updateFireRing(Player player, ServerLevel world) {
         buildFireRing(player, world);
-        Set<BlockPos> ring = fireRingBlocks.get(player.getUuid());
+        Set<BlockPos> ring = fireRingBlocks.get(player.getUUID());
         if (ring != null) {
             removeSpreadFire(world, ring);
         }
     }
-    private static void removeFireRing(PlayerEntity player, ServerWorld world) {
-        UUID uuid = player.getUuid();
+    private static void removeFireRing(Player player, ServerLevel world) {
+        UUID uuid = player.getUUID();
         Set<BlockPos> ring = fireRingBlocks.get(uuid);
         if (ring == null) return;
         for (BlockPos position : ring) {
@@ -321,7 +321,7 @@ public class MagmaWandHandler {
         }
         fireRingBlocks.remove(uuid);
     }
-    private static void removeSpreadFire(ServerWorld world, Set<BlockPos> ringPositions) {
+    private static void removeSpreadFire(ServerLevel world, Set<BlockPos> ringPositions) {
         int[] offsets = {-1, 0, 1};
         for (BlockPos pos : ringPositions) {
             for (int dx : offsets) {
@@ -337,7 +337,7 @@ public class MagmaWandHandler {
             }
         }
     }
-    private static BlockPos findGround(ServerWorld world, int x, int startY, int z) {
+    private static BlockPos findGround(ServerLevel world, int x, int startY, int z) {
         for (int y = startY; y <= startY + GROUND_SCAN_RANGE; y++) {
             BlockPos pos = new BlockPos(x, y, z);
             BlockPos above = pos.up();
@@ -357,7 +357,7 @@ public class MagmaWandHandler {
         return null;
     }
     private static void onTick(MinecraftServer server) {
-        for (ServerWorld world : server.getWorlds()) {
+        for (ServerLevel world : server.getWorlds()) {
             long currentTick = world.getTime();
             fireballExpiryTimes.entrySet().removeIf(entry -> {
                 if (currentTick >= entry.getValue()) {
@@ -366,18 +366,18 @@ public class MagmaWandHandler {
                 }
                 return false;
             });
-            for (PlayerEntity player : world.getPlayers()) {
-                UUID uuid = player.getUuid();
+            for (Player player : world.getPlayers()) {
+                UUID uuid = player.getUUID();
                 boolean holdingWand = player.getMainHandStack().getItem() instanceof MagmaWandItem || player.getOffHandStack().getItem() instanceof MagmaWandItem;
                 if (holdingWand) {
                     checkPassiveAbsorption(player, currentTick);
                     if (passiveAbsorptionGiven.containsKey(uuid)) {
                         Long grantedAt = absorptionGrantedAt.getOrDefault(uuid, 0L);
                         if (currentTick - grantedAt >= 5) {
-                            if (player.getAbsorptionAmount() <= 0 || !player.hasStatusEffect(StatusEffects.ABSORPTION)) {
+                            if (player.getAbsorptionAmount() <= 0 || !player.hasStatusEffect(MobEffects.ABSORPTION)) {
                                 passiveAbsorptionGiven.remove(uuid);
                                 absorptionGrantedAt.remove(uuid);
-                                player.removeStatusEffect(StatusEffects.ABSORPTION);
+                                player.removeStatusEffect(MobEffects.ABSORPTION);
                                 lastDamageTick.put(uuid, currentTick);
                                 absorptionGrantTick.remove(uuid);
                                 triggerPassiveKnockback(player);
@@ -389,7 +389,7 @@ public class MagmaWandHandler {
                 Long abilityEnd = abilityEndTimes.get(uuid);
                 if (abilityEnd != null && currentTick >= abilityEnd) {
                     abilityEndTimes.remove(uuid);
-                    player.removeStatusEffect(StatusEffects.FIRE_RESISTANCE);
+                    player.removeStatusEffect(MobEffects.FIRE_RESISTANCE);
                 } else if (abilityEnd != null) {
                     if (player.isOnFire() && player.getFireTicks() > 0) {
                         player.heal(0.1f);

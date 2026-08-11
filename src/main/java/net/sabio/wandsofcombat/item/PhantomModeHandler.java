@@ -8,12 +8,12 @@ import net.fabricmc.loader.impl.lib.sat4j.core.Vec;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
 import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.effect.MobEffectInstance;
+import net.minecraft.entity.effect.MobEffects;
+import net.minecraft.entity.player.Player;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.network.ServerPlayer;
+import net.minecraft.server.world.ServerLevel;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3d;
 import net.sabio.wandsofcombat.Wandsofcombat;
@@ -24,10 +24,10 @@ import java.util.*;
 public class PhantomModeHandler {
     private static final Map<UUID, Long> phantomEndTimes = new HashMap<>();
     private static final Map<UUID, Long> pullImmunityEndTimes = new HashMap<>();
-    private static final Map<UUID, StatusEffectInstance> savedInvisibility = new HashMap<>();
-    private static final Map<UUID, StatusEffectInstance> savedNightVision = new HashMap<>();
-    private static final Map<UUID, StatusEffectInstance> savedSlowness = new HashMap<>();
-    private static final Map<UUID, StatusEffectInstance> savedBlindness = new HashMap<>();
+    private static final Map<UUID, MobEffectInstance> savedInvisibility = new HashMap<>();
+    private static final Map<UUID, MobEffectInstance> savedNightVision = new HashMap<>();
+    private static final Map<UUID, MobEffectInstance> savedSlowness = new HashMap<>();
+    private static final Map<UUID, MobEffectInstance> savedBlindness = new HashMap<>();
     private static final Set<UUID> applyingReducedDamage = new HashSet<>();
     private static final int PHANTOM_DURATION = 200; // 10 seconds
     private static final double PULL_RANGE = 5.0;
@@ -36,13 +36,13 @@ public class PhantomModeHandler {
     private static final int PULL_IMMUNITY_DURATION = 10; // immune for 10 ticks after pull
     private static final Identifier REACH_MODIFIER_ID = Identifier.of(Wandsofcombat.MOD_ID, "phantom_wand_reach");
     private static class PullProgress {
-        final ServerPlayerEntity attacker;
+        final ServerPlayer attacker;
         final LivingEntity target;
         final Vec3d startPos;
         final Vec3d endPos;
         int totalTicks;
         int ticksElapsed;
-        PullProgress(ServerPlayerEntity attacker, LivingEntity target, Vec3d startPos, Vec3d endPos, int totalTicks) {
+        PullProgress(ServerPlayer attacker, LivingEntity target, Vec3d startPos, Vec3d endPos, int totalTicks) {
             this.attacker = attacker;
             this.target = target;
             this.startPos = startPos;
@@ -52,49 +52,49 @@ public class PhantomModeHandler {
         }
     }
     private static final Map<UUID, PullProgress> activePulls = new HashMap<>();
-    private static void applyPhantomEffects(PlayerEntity player) {
-        StatusEffectInstance existingInvisibility = player.getStatusEffect(StatusEffects.INVISIBILITY);
-        StatusEffectInstance existingNightVision = player.getStatusEffect(StatusEffects.NIGHT_VISION);
-        StatusEffectInstance existingSlowness = player.getStatusEffect(StatusEffects.SLOWNESS);
-        StatusEffectInstance existingBlindness = player.getStatusEffect(StatusEffects.BLINDNESS);
+    private static void applyPhantomEffects(Player player) {
+        MobEffectInstance existingInvisibility = player.getStatusEffect(MobEffects.INVISIBILITY);
+        MobEffectInstance existingNightVision = player.getStatusEffect(MobEffects.NIGHT_VISION);
+        MobEffectInstance existingSlowness = player.getStatusEffect(MobEffects.SLOWNESS);
+        MobEffectInstance existingBlindness = player.getStatusEffect(MobEffects.BLINDNESS);
         if (existingInvisibility != null) {
-            savedInvisibility.put(player.getUuid(), new StatusEffectInstance(existingInvisibility));
+            savedInvisibility.put(player.getUUID(), new MobEffectInstance(existingInvisibility));
         } else {
-            savedInvisibility.remove(player.getUuid());
+            savedInvisibility.remove(player.getUUID());
         }
         if (existingNightVision != null) {
-            savedNightVision.put(player.getUuid(), new StatusEffectInstance(existingNightVision));
+            savedNightVision.put(player.getUUID(), new MobEffectInstance(existingNightVision));
         } else {
-            savedNightVision.remove(player.getUuid());
+            savedNightVision.remove(player.getUUID());
         }
         if (existingSlowness != null) {
-            savedSlowness.put(player.getUuid(), new StatusEffectInstance(existingSlowness));
+            savedSlowness.put(player.getUUID(), new MobEffectInstance(existingSlowness));
         } else {
-            savedSlowness.remove(player.getUuid());
+            savedSlowness.remove(player.getUUID());
         }
         if (existingBlindness != null) {
-            savedBlindness.put(player.getUuid(), new StatusEffectInstance(existingBlindness));
+            savedBlindness.put(player.getUUID(), new MobEffectInstance(existingBlindness));
         } else {
-            savedBlindness.remove(player.getUuid());
+            savedBlindness.remove(player.getUUID());
         }
-        player.addStatusEffect(new StatusEffectInstance(
-                StatusEffects.INVISIBILITY,
+        player.addStatusEffect(new MobEffectInstance(
+                MobEffects.INVISIBILITY,
                 PHANTOM_DURATION,
                 0,
                 false,
                 false,
                 false
         ));
-        player.addStatusEffect(new StatusEffectInstance(
-                StatusEffects.NIGHT_VISION,
+        player.addStatusEffect(new MobEffectInstance(
+                MobEffects.NIGHT_VISION,
                 PHANTOM_DURATION,
                 0,
                 false,
                 false,
                 false
         ));
-        player.addStatusEffect(new StatusEffectInstance(
-                StatusEffects.DARKNESS,
+        player.addStatusEffect(new MobEffectInstance(
+                MobEffects.DARKNESS,
                 PHANTOM_DURATION,
                 0,
                 false,
@@ -102,17 +102,17 @@ public class PhantomModeHandler {
                 false
         ));
     }
-    private static void removePhantomEffects(PlayerEntity player) {
-        UUID uuid = player.getUuid();
-        player.removeStatusEffect(StatusEffects.INVISIBILITY);
-        player.removeStatusEffect(StatusEffects.NIGHT_VISION);
-        player.removeStatusEffect(StatusEffects.SLOWNESS);
-        player.removeStatusEffect(StatusEffects.BLINDNESS);
+    private static void removePhantomEffects(Player player) {
+        UUID uuid = player.getUUID();
+        player.removeStatusEffect(MobEffects.INVISIBILITY);
+        player.removeStatusEffect(MobEffects.NIGHT_VISION);
+        player.removeStatusEffect(MobEffects.SLOWNESS);
+        player.removeStatusEffect(MobEffects.BLINDNESS);
         player.setInvisible(false);
-        StatusEffectInstance savedInvis = savedInvisibility.remove(uuid);
-        StatusEffectInstance savedNV = savedNightVision.remove(uuid);
-        StatusEffectInstance savedSlow = savedSlowness.remove(uuid);
-        StatusEffectInstance savedBlind = savedBlindness.remove(uuid);
+        MobEffectInstance savedInvis = savedInvisibility.remove(uuid);
+        MobEffectInstance savedNV = savedNightVision.remove(uuid);
+        MobEffectInstance savedSlow = savedSlowness.remove(uuid);
+        MobEffectInstance savedBlind = savedBlindness.remove(uuid);
         if (savedInvis != null) {
             player.addStatusEffect(savedInvis);
         }
@@ -132,11 +132,11 @@ public class PhantomModeHandler {
         }
         player.noClip = false;
         PhantomWandItem.phantomPlayers.remove(uuid);
-        if (player instanceof ServerPlayerEntity serverPlayer) {
+        if (player instanceof ServerPlayer serverPlayer) {
             ServerPlayNetworking.send(serverPlayer, new PhantomSyncPacket(false));
         }
     }
-    private static void manageReachAttribute(PlayerEntity player, boolean holding) {
+    private static void manageReachAttribute(Player player, boolean holding) {
         var reachAttribute = player.getAttributeInstance(EntityAttributes.ENTITY_INTERACTION_RANGE);
         if (reachAttribute == null) return;
         reachAttribute.removeModifier(REACH_MODIFIER_ID);
@@ -149,10 +149,10 @@ public class PhantomModeHandler {
         }
     }
     private static void onTick(MinecraftServer server) {
-        for (ServerWorld world : server.getWorlds()) {
+        for (ServerLevel world : server.getWorlds()) {
             long currentTick = world.getTime();
-            for (PlayerEntity player : world.getPlayers()) {
-                UUID uuid = player.getUuid();
+            for (Player player : world.getPlayers()) {
+                UUID uuid = player.getUUID();
                 boolean holdingPhantomWand = player.getMainHandStack().getItem() instanceof PhantomWandItem;
                 manageReachAttribute(player, holdingPhantomWand);
                 if (!PhantomWandItem.phantomPlayers.contains(uuid)) continue;
@@ -169,8 +169,8 @@ public class PhantomModeHandler {
                     player.getAbilities().flying = true;
                     player.sendAbilitiesUpdate();
                 }
-                player.addStatusEffect(new StatusEffectInstance(
-                        StatusEffects.SLOWNESS,
+                player.addStatusEffect(new MobEffectInstance(
+                        MobEffects.SLOWNESS,
                         2,
                         5,
                         false,
@@ -214,17 +214,17 @@ public class PhantomModeHandler {
         ServerTickEvents.END_SERVER_TICK.register(PhantomModeHandler::onTick);
 
         ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
-            if (entity instanceof PlayerEntity player) {
-                Long immunityEnd = pullImmunityEndTimes.get(player.getUuid());
+            if (entity instanceof Player player) {
+                Long immunityEnd = pullImmunityEndTimes.get(player.getUUID());
                 if (immunityEnd != null && entity.getEntityWorld().getTime() <= immunityEnd) {
                     return false;
                 }
             }
-            if (source.getAttacker() instanceof PlayerEntity attacker) {
-                UUID attackerId = attacker.getUuid();
+            if (source.getAttacker() instanceof Player attacker) {
+                UUID attackerId = attacker.getUUID();
                 if (PhantomWandItem.phantomPlayers.contains(attackerId) && !applyingReducedDamage.contains(attackerId) && attacker.getMainHandStack().getItem() instanceof PhantomWandItem) {
                     applyingReducedDamage.add(attackerId);
-                    entity.damage((ServerWorld) attacker.getEntityWorld(), source, amount * 0.2f);
+                    entity.damage((ServerLevel) attacker.getEntityWorld(), source, amount * 0.2f);
                     applyingReducedDamage.remove(attackerId);
                     return false;
                 }
@@ -232,7 +232,7 @@ public class PhantomModeHandler {
             return true;
         });
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
-            UUID uuid = handler.player.getUuid();
+            UUID uuid = handler.player.getUUID();
             PhantomWandItem.phantomPlayers.remove(uuid);
             PhantomWandItem.pullingPlayers.remove(uuid);
             phantomEndTimes.remove(uuid);
@@ -254,17 +254,17 @@ public class PhantomModeHandler {
             }
         });
     }
-    public static void activatePhantomMode(PlayerEntity player, ServerWorld world) {
-        UUID uuid = player.getUuid();
+    public static void activatePhantomMode(Player player, ServerLevel world) {
+        UUID uuid = player.getUUID();
         long endTick = world.getTime() + PHANTOM_DURATION;
         phantomEndTimes.put(uuid, endTick);
         PhantomWandItem.phantomPlayers.add(uuid);
         applyPhantomEffects(player);
-        if (player instanceof ServerPlayerEntity serverPlayer) {
+        if (player instanceof ServerPlayer serverPlayer) {
             ServerPlayNetworking.send(serverPlayer, new PhantomSyncPacket(true));
         }
     }
-    public static boolean tryPullAttack(ServerPlayerEntity attacker, LivingEntity target) {
+    public static boolean tryPullAttack(ServerPlayer attacker, LivingEntity target) {
         if (!(attacker.getMainHandStack().getItem() instanceof PhantomWandItem)) {
             return false;
         }
@@ -273,13 +273,13 @@ public class PhantomModeHandler {
             return false;
         }
         long immunityEnd = (attacker.getEntityWorld()).getTime() + PULL_IMMUNITY_DURATION + 5;
-        pullImmunityEndTimes.put(attacker.getUuid(), immunityEnd);
-        PhantomWandItem.pullingPlayers.add(attacker.getUuid());
+        pullImmunityEndTimes.put(attacker.getUUID(), immunityEnd);
+        PhantomWandItem.pullingPlayers.add(attacker.getUUID());
         Vec3d direction = target.getEntityPos().subtract(attacker.getEntityPos()).normalize();
         double pullDistance = distance - MELEE_RANGE + 0.5;
         Vec3d destination = attacker.getEntityPos().add(direction.multiply(pullDistance));
 
-        activePulls.put(attacker.getUuid(), new PullProgress(
+        activePulls.put(attacker.getUUID(), new PullProgress(
                 attacker,
                 target,
                 attacker.getEntityPos(),
@@ -288,8 +288,8 @@ public class PhantomModeHandler {
         ));
         return true;
     }
-    public static float modifyOutgoingDamage(PlayerEntity attacker, float originalDamage) {
-        if (PhantomWandItem.phantomPlayers.contains(attacker.getUuid())) {
+    public static float modifyOutgoingDamage(Player attacker, float originalDamage) {
+        if (PhantomWandItem.phantomPlayers.contains(attacker.getUUID())) {
             return originalDamage * 0.2f;
         }
         return originalDamage;

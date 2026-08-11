@@ -5,7 +5,7 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.projectile.FireballEntity;
 import net.minecraft.particle.DustParticleEffect;
 import net.minecraft.particle.ParticleTypes;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.world.ServerLevel;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
@@ -22,14 +22,14 @@ public class MagmaWandFireballEntity extends FireballEntity {
     @Override
     protected void onEntityHit(EntityHitResult hitResult) {
         super.onEntityHit(hitResult);
-        if (getEntityWorld() instanceof ServerWorld serverWorld) {
+        if (getEntityWorld() instanceof ServerLevel ServerLevel) {
             hitResult.getEntity().damage(
-                    serverWorld,
-                    serverWorld.getDamageSources().fireball(this, getOwner()),
+                    ServerLevel,
+                    ServerLevel.getDamageSources().fireball(this, getOwner()),
                     8.0f
             );
             hitResult.getEntity().setOnFireFor(5);
-            serverWorld.spawnParticles(
+            ServerLevel.spawnParticles(
                     new DustParticleEffect(0xF7803D, 2.5f),
                     hitResult.getEntity().getX(),
                     hitResult.getEntity().getY() + 1.0,
@@ -40,7 +40,7 @@ public class MagmaWandFireballEntity extends FireballEntity {
                     0.4,
                     0
             );
-            serverWorld.spawnParticles(
+            ServerLevel.spawnParticles(
                     ParticleTypes.LAVA,
                     hitResult.getEntity().getX(),
                     hitResult.getEntity().getY() + 1.0,
@@ -51,7 +51,7 @@ public class MagmaWandFireballEntity extends FireballEntity {
                     0.3,
                     0.2
             );
-            serverWorld.spawnParticles(
+            ServerLevel.spawnParticles(
                     ParticleTypes.LARGE_SMOKE,
                     hitResult.getEntity().getX(),
                     hitResult.getEntity().getY() + 1.0,

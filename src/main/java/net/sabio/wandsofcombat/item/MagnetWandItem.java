@@ -4,12 +4,12 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.ExperienceOrbEntity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.Player;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ToolMaterial;
 import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.world.ServerLevel;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.Box;
@@ -38,21 +38,21 @@ public class MagnetWandItem extends Item {
 
     @Override
     public void postHit(ItemStack stack, LivingEntity target, LivingEntity attacker) {
-        if (attacker instanceof PlayerEntity player && !attacker.getEntityWorld().isClient()) {
+        if (attacker instanceof Player player && !attacker.getEntityWorld().isClient()) {
             MagnetPullManager.recordHit(player, target);
         }
         super.postHit(stack, target, attacker);
     }
 
     @Override
-    public ActionResult use(World world, PlayerEntity player, Hand hand) {
+    public ActionResult use(World world, Player player, Hand hand) {
         if (hand == Hand.OFF_HAND) return ActionResult.PASS;
         ItemStack stack = player.getStackInHand(hand);
         if (player.getItemCooldownManager().isCoolingDown(stack)) return ActionResult.FAIL;
         if (!world.isClient()) {
             player.getItemCooldownManager().set(stack, COOLDOWN);
-            assert ((ServerWorld) world).getServer() != null;
-            WandCooldownState.get(((ServerWorld)world).getServer()).save(player.getUuid(), "magnet", COOLDOWN);
+            assert ((ServerLevel) world).getServer() != null;
+            WandCooldownState.get(((ServerLevel)world).getServer()).save(player.getUUID(), "magnet", COOLDOWN);
             if (MagnetPullManager.isRepelMode(player)) {
                 MagnetPullManager.doRepel(player, REPEL_RANGE, REPEL_DAMAGE);
             } else {

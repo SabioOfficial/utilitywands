@@ -3,8 +3,8 @@ package net.sabio.wandsofcombat.item;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.network.ServerPlayer;
+import net.minecraft.server.world.ServerLevel;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -12,10 +12,10 @@ import java.util.List;
 
 public class PullAttackScheduler {
     private static class ScheduledAttack {
-        final ServerPlayerEntity attacker;
+        final ServerPlayer attacker;
         final LivingEntity target;
         final long executeTick;
-        ScheduledAttack(ServerPlayerEntity attacker, LivingEntity target, long executeTick) {
+        ScheduledAttack(ServerPlayer attacker, LivingEntity target, long executeTick) {
             this.attacker = attacker;
             this.target = target;
             this.executeTick = executeTick;
@@ -26,7 +26,7 @@ public class PullAttackScheduler {
         List<ScheduledAttack> toExecute = new ArrayList<>();
         List<ScheduledAttack> toRemove = new ArrayList<>();
         for (ScheduledAttack attack : pending) {
-            for (ServerWorld world : server.getWorlds()) {
+            for (ServerLevel world : server.getWorlds()) {
                 if (world.getTime() >= attack.executeTick) {
                     toExecute.add(attack);
                     toRemove.add(attack);
@@ -44,7 +44,7 @@ public class PullAttackScheduler {
     public static void initialize() {
         ServerTickEvents.END_SERVER_TICK.register(PullAttackScheduler::onTick);
     }
-    public static void schedule(ServerPlayerEntity attacker, LivingEntity target, long executeTick) {
+    public static void schedule(ServerPlayer attacker, LivingEntity target, long executeTick) {
         pending.add(new ScheduledAttack(attacker, target, executeTick));
     }
 }

@@ -1,6 +1,7 @@
 package net.sabio.wandsofcombat.item;
 
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Collections;
 import java.util.Set;
@@ -12,15 +13,15 @@ public class LightningFireTracker {
             Collections.newSetFromMap(new WeakHashMap<>())
     );
 
-    public static void markLightningFire(PlayerEntity player) {
-        lightningStruckPlayers.add(player.getUuid());
+    public static void markLightningFire(Player player) {
+        lightningStruckPlayers.add(player.getUUID());
     }
 
-    public static boolean isLightningFire(PlayerEntity player) {
-        return lightningStruckPlayers.contains(player.getUuid());
+    public static boolean isLightningFire(ServerPlayer player) {
+        return lightningStruckPlayers.contains(player.getUUID());
     }
 
-    public static void clear(PlayerEntity player) {
-        lightningStruckPlayers.remove(player.getUuid());
+    public static void clear(ServerPlayer player) {
+        lightningStruckPlayers.remove(player.getUUID());
     }
 }
