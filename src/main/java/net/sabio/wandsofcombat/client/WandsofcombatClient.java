@@ -1,35 +1,35 @@
 package net.sabio.wandsofcombat.client;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.util.Identifier;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.resources.Identifier;
 import net.sabio.wandsofcombat.Wandsofcombat;
 import net.sabio.wandsofcombat.item.MagnetTogglePacket;
 import org.lwjgl.glfw.GLFW;
 
 public class WandsofcombatClient implements ClientModInitializer {
-    private static KeyBinding toggleRepelKey;
+    private static KeyMapping toggleRepelKey;
 
     @Override
     public void onInitializeClient() {
         MagnetTogglePacket.initializeClient();
-        KeyBinding.Category wandsCategory;
+        KeyMapping.Category wandsCategory;
         try {
-            wandsCategory = KeyBinding.Category.create(Identifier.of(Wandsofcombat.MOD_ID, "wands"));
+            wandsCategory = KeyMapping.Category.register(Identifier.fromNamespaceAndPath(Wandsofcombat.MOD_ID, "wands"));
         } catch (IllegalArgumentException error) {
-            wandsCategory = KeyBinding.Category.MISC;
+            wandsCategory = KeyMapping.Category.MISC;
         }
-        toggleRepelKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+        toggleRepelKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.wandsofcombat.toggle_repel",
-                InputUtil.Type.KEYSYM,
+                InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_R,
                 wandsCategory
         ));
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            while (toggleRepelKey.wasPressed()) {
+            while (toggleRepelKey.isDown()) {
                 MagnetTogglePacket.sendToggle();
             }
         });
