@@ -11,6 +11,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageSources;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
@@ -51,7 +52,9 @@ public class MagmaWandHandler {
             entity.knockback(
                     1.5,
                     -away.x,
-                    -away.z
+                    -away.z,
+                    world.damageSources().magic(),
+                    0
             );
             Vec3 currentMotion = entity.getDeltaMovement();
             entity.setDeltaMovement(currentMotion.x, 0.3, currentMotion.z);

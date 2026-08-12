@@ -4,6 +4,7 @@ import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.hurtingprojectile.Fireball;
 import net.minecraft.world.level.Level;
@@ -13,7 +14,7 @@ import net.minecraft.world.phys.Vec3;
 
 public class MagmaWandFireballEntity extends Fireball {
     public MagmaWandFireballEntity(Level world, LivingEntity owner, Vec3 direction) {
-        super(EntityType.FIREBALL, owner, direction, world);
+        super(EntityTypes.FIREBALL, owner, direction, world);
     }
 
     public MagmaWandFireballEntity(EntityType<? extends Fireball> type, Level world) {

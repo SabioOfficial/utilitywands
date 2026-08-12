@@ -4,10 +4,7 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LightningBolt;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -39,7 +36,7 @@ public class ElectricWandItem extends Item {
     }
 
     public static void strikeLightningOn(Entity target, ServerLevel world) {
-        LightningBolt lightning = new LightningBolt(EntityType.LIGHTNING_BOLT, world);
+        LightningBolt lightning = new LightningBolt(EntityTypes.LIGHTNING_BOLT, world);
         lightning.snapTo(target.getX(), target.getY(), target.getZ());
         lightning.setVisualOnly(true);
         world.addFreshEntity(lightning);

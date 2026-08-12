@@ -67,7 +67,7 @@ public class ElectricWandLightningHandler {
         } catch (Exception ignored) {}
     }
     private static void doSpawnSkeleton(ServerLevel world, Player summoner, LivingEntity target, long currentTick) {
-        Skeleton skeleton = new Skeleton(EntityType.SKELETON, world);
+        Skeleton skeleton = new Skeleton(EntityTypes.SKELETON, world);
         skeleton.snapTo(target.getX(), target.getY(), target.getZ(), summoner.getYRot(), 0);
         skeleton.finalizeSpawn(world, world.getCurrentDifficultyAt(skeleton.blockPosition()), EntitySpawnReason.MOB_SUMMONED, null);
         world.addFreshEntity(skeleton);
