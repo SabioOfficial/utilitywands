@@ -53,7 +53,8 @@ public class MagmaWandHandler {
                     -away.x,
                     -away.z
             );
-            entity.setDeltaMovement(0, 0.3, 0);
+            Vec3 currentMotion = entity.getDeltaMovement();
+            entity.setDeltaMovement(currentMotion.x, 0.3, currentMotion.z);
             entity.hurtMarked = true;
             if (entity instanceof ServerPlayer serverTarget) {
                 serverTarget.connection.send(new ClientboundSetEntityMotionPacket(serverTarget));

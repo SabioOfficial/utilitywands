@@ -19,6 +19,6 @@ public record PhantomSyncPacket(boolean active) implements CustomPacketPayload {
     }
 
     public static void initialize() {
-        PayloadTypeRegistry.serverboundPlay().register(TYPE, CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(TYPE, CODEC);
     }
 }

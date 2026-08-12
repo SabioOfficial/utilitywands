@@ -29,7 +29,7 @@ public class WandsofcombatClient implements ClientModInitializer {
                 wandsCategory
         ));
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            while (toggleRepelKey.isDown()) {
+            while (toggleRepelKey.consumeClick()) {
                 MagnetTogglePacket.sendToggle();
             }
         });
