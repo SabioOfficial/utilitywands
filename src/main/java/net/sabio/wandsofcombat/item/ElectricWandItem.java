@@ -11,6 +11,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ToolMaterial;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
+import net.sabio.wandsofcombat.mana.ManaCosts;
+import net.sabio.wandsofcombat.mana.ManaManager;
 
 import java.util.HashMap;
 import java.util.List;
@@ -18,7 +20,6 @@ import java.util.Map;
 import java.util.UUID;
 
 public class ElectricWandItem extends Item {
-    public static final int COOLDOWN_DURATION = 600; // 30 seconds
     private static final float ATTACK_DAMAGE_BONUS = 4.0f; // total atk damage: 8
     private static final float ATTACK_SPEED = -3f;
     private static final double ABILITY_RANGE = 16.0;
@@ -60,13 +61,12 @@ public class ElectricWandItem extends Item {
 
     @Override
     public InteractionResult use(Level world, Player player, InteractionHand hand) {
-        ItemStack stack = player.getItemInHand(hand);
-        if (player.getCooldowns().isOnCooldown(stack)) return InteractionResult.FAIL;
+        if (!ManaManager.hasEnough(player, ManaCosts.ELECTRIC_WAND)) {
+            return InteractionResult.FAIL;
+        }
         if (!world.isClientSide()) {
             ServerLevel ServerLevel = (ServerLevel) world;
-            player.getCooldowns().addCooldown(stack, COOLDOWN_DURATION);
-            assert ServerLevel.getServer() != null;
-            WandCooldownState.get(ServerLevel.getServer()).save(player.getUUID(), "electric", COOLDOWN_DURATION);
+            if (!ManaManager.tryConsume(player, ManaCosts.ELECTRIC_WAND)) return InteractionResult.FAIL;
             AABB box = player.getBoundingBox().inflate(ABILITY_RANGE);
             List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, box, entity -> entity != player && !entity.isRemoved());
             if (!targets.isEmpty()) {

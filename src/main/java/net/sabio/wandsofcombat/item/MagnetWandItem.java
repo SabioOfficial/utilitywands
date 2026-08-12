@@ -10,9 +10,10 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ToolMaterial;
 import net.minecraft.world.level.Level;
+import net.sabio.wandsofcombat.mana.ManaCosts;
+import net.sabio.wandsofcombat.mana.ManaManager;
 
 public class MagnetWandItem extends Item {
-    public static final int COOLDOWN = 600; // 30 seconds (in ticks)
     private static final float ATTACK_DAMAGE_BONUS = 3.0f;
     private static final float ATTACK_SPEED = -2.4f;
     private static final double ABILITY_PULL_RANGE = 12.0;
@@ -40,12 +41,9 @@ public class MagnetWandItem extends Item {
     @Override
     public InteractionResult use(Level world, Player player, InteractionHand hand) {
         if (hand == InteractionHand.OFF_HAND) return InteractionResult.PASS;
-        ItemStack stack = player.getItemInHand(hand);
-        if (player.getCooldowns().isOnCooldown(stack)) return InteractionResult.FAIL;
+        if (!ManaManager.hasEnough(player, ManaCosts.MAGNET_WAND)) return InteractionResult.FAIL;
         if (!world.isClientSide()) {
-            player.getCooldowns().addCooldown(stack, COOLDOWN);
-            assert ((ServerLevel) world).getServer() != null;
-            WandCooldownState.get(((ServerLevel)world).getServer()).save(player.getUUID(), "magnet", COOLDOWN);
+            if (!ManaManager.tryConsume(player, ManaCosts.MAGNET_WAND)) return InteractionResult.FAIL;
             if (MagnetPullManager.isRepelMode(player)) {
                 MagnetPullManager.doRepel(player, REPEL_RANGE, REPEL_DAMAGE);
             } else {

@@ -18,12 +18,12 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.sabio.wandsofcombat.mana.ManaCosts;
+import net.sabio.wandsofcombat.mana.ManaManager;
 
 import java.util.List;
 
 public class IceWandItem extends Item {
-    public static final int LITE_COOLDOWN = 400; // 20 seconds; lite = mobs only affected ability
-    public static final int FULL_COOLDOWN = 600; // 30 seconds; full = mobs + players affected ability
     private static final double LITE_RANGE = 8.0;
     private static final double FULL_RANGE = 12.0;
     private static final int FREEZE_DURATION = 80; // 4 seconds
@@ -175,20 +175,23 @@ public class IceWandItem extends Item {
 
     @Override
     public InteractionResult use(Level world, Player player, InteractionHand hand) {
-        ItemStack stack = player.getItemInHand(hand);
-        if (player.getCooldowns().isOnCooldown(stack)) {
+        if (!ManaManager.hasEnough(player, ManaCosts.ICE_WAND_LITE)) {
             return InteractionResult.FAIL;
         }
         if (!world.isClientSide()) {
+            if (!ManaManager.tryConsume(player, ManaCosts.ICE_WAND_LITE)) {
+                return InteractionResult.FAIL;
+            }
             boolean hitPlayer = applyAbility(world, player);
-            int cooldown = hitPlayer ? FULL_COOLDOWN : LITE_COOLDOWN;
-            player.getCooldowns().addCooldown(stack, cooldown);
-            assert ((ServerLevel) world).getServer() != null;
-            WandCooldownState.get(((ServerLevel)world).getServer()).save(player.getUUID(), "ice", cooldown);
+            if (hitPlayer) {
+                int extraCost = ManaCosts.ICE_WAND_FULL - ManaCosts.ICE_WAND_LITE;
+                ManaManager.tryConsume(player, extraCost);
+            }
         }
 
         return InteractionResult.SUCCESS;
     }
+
 
     @Override
     public void postHurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {

@@ -10,6 +10,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ToolMaterial;
 import net.minecraft.world.level.Level;
+import net.sabio.wandsofcombat.mana.ManaCosts;
+import net.sabio.wandsofcombat.mana.ManaManager;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -17,7 +19,6 @@ import java.util.UUID;
 
 public class PhantomWandItem extends Item {
     public static final int ABILITY_DURATION = 120; // 6 seconds
-    public static final int ABILITY_COOLDOWN = 1200 + ABILITY_DURATION; // 1 minute
     private static final float ATTACK_DAMAGE_BONUS = 2.0f; // 6 total attack damage
     private static final float ATTACK_SPEED = -1.5f;
     public static final Set<UUID> phantomPlayers = new HashSet<>();
@@ -33,14 +34,13 @@ public class PhantomWandItem extends Item {
     }
     @Override
     public InteractionResult use(Level world, Player player, InteractionHand hand) {
-        ItemStack stack = player.getItemInHand(hand);
-        if (player.getCooldowns().isOnCooldown(stack)) {
+        if (!ManaManager.hasEnough(player, ManaCosts.PHANTOM_WAND)) {
             return InteractionResult.FAIL;
         }
         if (!world.isClientSide()) {
-            player.getCooldowns().addCooldown(stack, ABILITY_COOLDOWN);
-            assert ((ServerLevel) world).getServer() != null;
-            WandCooldownState.get(((ServerLevel)world).getServer()).save(player.getUUID(), "phantom", ABILITY_COOLDOWN);
+            if (!ManaManager.tryConsume(player, ManaCosts.PHANTOM_WAND)) {
+                return InteractionResult.FAIL;
+            }
             PhantomModeHandler.activatePhantomMode(player, (ServerLevel) world);
         }
 
