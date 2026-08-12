@@ -18,14 +18,14 @@ public class Wandsofcombat implements ModInitializer {
     public void onInitialize() {
         ModItems.initialize();
         MagnetPullManager.initialize();
-        ElectricWandLightningHandler.initialize();
-        ElectricWandPassiveHandler.initialize();
-        LightningStrikeHandler.initialize();
-        PhantomModeHandler.initialize();
+        ElectricWandLightningInteractionHandler.initialize();
+        ElectricWandPassiveInteractionHandler.initialize();
+        LightningStrikeInteractionHandler.initialize();
+        PhantomModeInteractionHandler.initialize();
         PullAttackScheduler.initialize();
         PhantomSyncPacket.initialize();
-        MagmaWandHandler.initialize();
-        IceWandComboHandler.initialize();
+        MagmaWandInteractionHandler.initialize();
+        IceWandComboInteractionHandler.initialize();
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             net.minecraft.server.network.ServerPlayer player = handler.player;
             WandCooldownState state = WandCooldownState.get(server);
@@ -40,7 +40,7 @@ public class Wandsofcombat implements ModInitializer {
                         case "phantom" -> ModItems.PHANTOM_WAND;
                         default -> ModItems.MAGMA_WAND;
                     };
-                    player.getItemCooldownManager().set(new ItemStack(item), ticks);
+                    player.getCooldowns().set(new ItemStack(item), ticks);
                 }
             }
         });

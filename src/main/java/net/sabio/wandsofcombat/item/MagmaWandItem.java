@@ -1,17 +1,17 @@
 package net.sabio.wandsofcombat.item;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.Player;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ToolMaterial;
-import net.minecraft.particle.DustParticleEffect;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.server.world.ServerLevel;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.world.World;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ToolMaterial;
+import net.minecraft.world.level.Level;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,8 +25,8 @@ public class MagmaWandItem extends Item {
     public static final int ABILITY_DURATION = 900; // 45 seconds
     public static final int ULTIMATE_DURATION = 600; // 30 seconds
     public static final Map<UUID, Integer> hitCounters = new HashMap<>();
-    public MagmaWandItem(Settings settings) {
-        super(ToolMaterial.DIAMOND.applyToolSettings(
+    public MagmaWandItem(Properties settings) {
+        super(ToolMaterial.DIAMOND.applyToolProperties(
                 settings,
                 BlockTags.SWORD_EFFICIENT,
                 ATTACK_DAMAGE_BONUS,
@@ -35,29 +35,29 @@ public class MagmaWandItem extends Item {
         ));
     }
     @Override
-    public ActionResult use(World world, Player player, Hand hand) {
-        if (hand == Hand.OFF_HAND && player.getMainHandStack().getItem() instanceof MagmaWandItem) {
-            return ActionResult.PASS;
+    public InteractionResult use(Level world, Player player, InteractionHand hand) {
+        if (hand == InteractionHand.OFF_HAND && player.getMainHandItem().getItem() instanceof MagmaWandItem) {
+            return InteractionResult.PASS;
         }
-        if (!world.isClient()) {
-            if (player.isSneaking()) {
+        if (!world.isClientSide()) {
+            if (player.isCrouching()) {
                 MagmaWandHandler.tryActivateUltimate(player);
             } else {
                 MagmaWandHandler.tryActivateAbility(player);
             }
         }
-        return ActionResult.SUCCESS;
+        return InteractionResult.SUCCESS;
     }
     @Override
-    public void postHit(ItemStack stack, LivingEntity target, LivingEntity attacker) {
-        if (attacker instanceof Player player && !attacker.getEntityWorld().isClient()) {
+    public void postHurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
+        if (attacker instanceof Player player && !attacker.level().isClientSide()) {
             UUID uuid = player.getUUID();
             int hits = hitCounters.getOrDefault(uuid, 0) + 1;
             if (hits >= 5) {
                 hitCounters.put(uuid, 0);
-                if (attacker.getEntityWorld() instanceof ServerLevel ServerLevel) {
-                    ServerLevel.spawnParticles(
-                            new DustParticleEffect(0xDC4810, 2.0f),
+                if (attacker.level() instanceof ServerLevel ServerLevel) {
+                    ServerLevel.sendParticles(
+                            new DustParticleOptions(0xDC4810, 2.0f),
                             attacker.getX(),
                             attacker.getY() + 1.0,
                             attacker.getZ(),
@@ -67,7 +67,7 @@ public class MagmaWandItem extends Item {
                             0.3,
                             0
                     );
-                    ServerLevel.spawnParticles(
+                    ServerLevel.sendParticles(
                             ParticleTypes.FLAME,
                             attacker.getX(),
                             attacker.getY() + 1.0,
@@ -84,6 +84,6 @@ public class MagmaWandItem extends Item {
                 hitCounters.put(uuid, hits);
             }
         }
-        super.postHit(stack, target, attacker);
+        super.postHurtEnemy(stack, target, attacker);
     }
 }

@@ -1,21 +1,23 @@
 package net.sabio.wandsofcombat.item;
 
-import net.minecraft.block.Blocks;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.effect.MobEffectInstance;
-import net.minecraft.entity.effect.MobEffects;
-import net.minecraft.entity.player.Player;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ToolMaterial;
-import net.minecraft.particle.*;
-import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.server.world.ServerLevel;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ToolMaterial;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
@@ -31,13 +33,13 @@ public class IceWandItem extends Item {
     private static final float ATTACK_SPEED = -3.3f;
     private static final float ATTACK_DAMAGE_BONUS = 8.0f; // 12 total attack damage
 
-    private boolean applyAbility(World world, Player player) {
+    private boolean applyAbility(Level world, Player player) {
         boolean hitPlayer = false;
-        Box mobBox = player.getBoundingBox().expand(LITE_RANGE);
-        List<LivingEntity> nearbyMobs = world.getEntitiesByClass(LivingEntity.class, mobBox, entity -> !(entity instanceof Player) && !entity.isRemoved());
+        AABB mobBox = player.getBoundingBox().inflate(LITE_RANGE);
+        List<LivingEntity> nearbyMobs = world.getEntitiesOfClass(LivingEntity.class, mobBox, entity -> !(entity instanceof Player) && !entity.isRemoved());
         for (LivingEntity mob : nearbyMobs) {
-            mob.setFrozenTicks(POWDER_SNOW_FREEZE_DURATION);
-            mob.addStatusEffect(new MobEffectInstance(
+            mob.setTicksFrozen(POWDER_SNOW_FREEZE_DURATION);
+            mob.addEffect(new MobEffectInstance(
                     MobEffects.SLOWNESS,
                     FREEZE_DURATION,
                     LITE_SLOWNESS_AMPLIFIER,
@@ -45,11 +47,11 @@ public class IceWandItem extends Item {
                     true,
                     true
             ));
-            mob.setDeltaMovement(Vec3d.ZERO);
+            mob.setDeltaMovement(Vec3.ZERO);
             mob.hurtMarked = true;
 
             if (world instanceof ServerLevel ServerLevel) {
-                ServerLevel.spawnParticles(
+                ServerLevel.sendParticles(
                         ParticleTypes.SNOWFLAKE,
                         mob.getX(),
                         mob.getY() + 1.0,
@@ -60,8 +62,8 @@ public class IceWandItem extends Item {
                         0.4,
                         0.05
                 );
-                ServerLevel.spawnParticles(
-                        new BlockStateParticleEffect(ParticleTypes.BLOCK, Blocks.PACKED_ICE.getDefaultState()),
+                ServerLevel.sendParticles(
+                        new BlockParticleOption(ParticleTypes.BLOCK, Blocks.PACKED_ICE.defaultBlockState()),
                         mob.getX(),
                         mob.getY() + 0.5,
                         mob.getZ(),
@@ -71,8 +73,8 @@ public class IceWandItem extends Item {
                         0.4,
                         0.1
                 );
-                ServerLevel.spawnParticles(
-                        new DustParticleEffect(0x80D9FF, 2.0f),
+                ServerLevel.sendParticles(
+                        new DustParticleOptions(0x80D9FF, 2.0f),
                         mob.getX(),
                         mob.getY() + 1.0,
                         mob.getZ(),
@@ -84,14 +86,14 @@ public class IceWandItem extends Item {
                 );
             }
         }
-        Box playerBox = player.getBoundingBox().expand(FULL_RANGE);
-        List<Player> nearbyPlayers = world.getEntitiesByClass(
+        AABB playerBox = player.getBoundingBox().inflate(FULL_RANGE);
+        List<Player> nearbyPlayers = world.getEntitiesOfClass(
                 Player.class,
                 playerBox,
                 entity -> entity != player && !entity.isRemoved()
         );
         for (Player target : nearbyPlayers) {
-            target.addStatusEffect(new MobEffectInstance(
+            target.addEffect(new MobEffectInstance(
                     MobEffects.SLOWNESS,
                     120,
                     FULL_SLOWNESS_AMPLIFIER,
@@ -99,10 +101,10 @@ public class IceWandItem extends Item {
                     true,
                     true
             ));
-            target.setFrozenTicks(POWDER_SNOW_FREEZE_DURATION);
+            target.setTicksFrozen(POWDER_SNOW_FREEZE_DURATION);
             hitPlayer = true;
             if (world instanceof ServerLevel ServerLevel) {
-                ServerLevel.spawnParticles(
+                ServerLevel.sendParticles(
                         ParticleTypes.SNOWFLAKE,
                         target.getX(),
                         target.getY() + 1.0,
@@ -113,8 +115,8 @@ public class IceWandItem extends Item {
                         0.4,
                         0.05
                 );
-                ServerLevel.spawnParticles(
-                        new DustParticleEffect(0x80D9FF, 2.0f),
+                ServerLevel.sendParticles(
+                        new DustParticleOptions(0x80D9FF, 2.0f),
                         target.getX(),
                         target.getY() + 1.0,
                         target.getZ(),
@@ -132,9 +134,9 @@ public class IceWandItem extends Item {
                 double angle = (2.0 * Math.PI / 24) * i;
                 double range = hitPlayer ? FULL_RANGE : LITE_RANGE;
                 double posX = player.getX() + range * Math.cos(angle);
-                double posZ = player.getZ() + range * Math.sin(range);
-                ServerLevel.spawnParticles(
-                        new DustParticleEffect(0x80D9FF, 1.5f),
+                double posZ = player.getZ() + range * Math.sin(angle);
+                ServerLevel.sendParticles(
+                        new DustParticleOptions(0x80D9FF, 1.5f),
                         posX,
                         player.getY() + 0.5,
                         posZ,
@@ -144,7 +146,7 @@ public class IceWandItem extends Item {
                         0,
                         0
                 );
-                ServerLevel.spawnParticles(
+                ServerLevel.sendParticles(
                         ParticleTypes.SNOWFLAKE,
                         posX,
                         player.getY() + 0.5,
@@ -161,8 +163,8 @@ public class IceWandItem extends Item {
         return hitPlayer;
     }
 
-    public IceWandItem(Settings settings) {
-        super(ToolMaterial.DIAMOND.applyToolSettings(
+    public IceWandItem(Properties settings) {
+        super(ToolMaterial.DIAMOND.applyToolProperties(
                 settings,
                 BlockTags.SWORD_EFFICIENT,
                 ATTACK_DAMAGE_BONUS,
@@ -172,27 +174,27 @@ public class IceWandItem extends Item {
     }
 
     @Override
-    public ActionResult use(World world, Player player, Hand hand) {
-        ItemStack stack = player.getStackInHand(hand);
-        if (player.getItemCooldownManager().isCoolingDown(stack)) {
-            return ActionResult.FAIL;
+    public InteractionResult use(Level world, Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (player.getCooldowns().isOnCooldown(stack)) {
+            return InteractionResult.FAIL;
         }
-        if (!world.isClient()) {
+        if (!world.isClientSide()) {
             boolean hitPlayer = applyAbility(world, player);
             int cooldown = hitPlayer ? FULL_COOLDOWN : LITE_COOLDOWN;
-            player.getItemCooldownManager().set(stack, cooldown);
+            player.getCooldowns().addCooldown(stack, cooldown);
             assert ((ServerLevel) world).getServer() != null;
             WandCooldownState.get(((ServerLevel)world).getServer()).save(player.getUUID(), "ice", cooldown);
         }
 
-        return ActionResult.SUCCESS;
+        return InteractionResult.SUCCESS;
     }
 
     @Override
-    public void postHit(ItemStack stack, LivingEntity target, LivingEntity attacker) {
-        if (attacker instanceof Player player && !attacker.getEntityWorld().isClient()) {
+    public void postHurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
+        if (attacker instanceof Player player && !attacker.level().isClientSide()) {
             IceWandComboHandler.onHit(player, target);
         }
-        super.postHit(stack, target, attacker);
+        super.postHurtEnemy(stack, target, attacker);
     }
 }

@@ -1,7 +1,7 @@
 package net.sabio.wandsofcombat.item;
 
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
-import net.minecraft.entity.player.Player;
+import net.minecraft.world.entity.player.Player;
 
 public class LightningStrikeHandler {
     public static void initialize() {
@@ -9,7 +9,7 @@ public class LightningStrikeHandler {
             if (!(entity instanceof Player player)) return true;
             if (!ElectricWandPassiveHandler.isHoldingElectricWand(player)) return true;
 
-            if (source.getType().msgId().equals("lightningBolt")) {
+            if (source.type().msgId().equals("lightningBolt")) {
                 LightningFireTracker.markLightningFire(player);
                 return false;
             }

@@ -10,8 +10,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.ToolMaterial;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerLevel;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
+import net.minecraft.util.InteractionResult;
+import net.minecraft.util.InteractionHand;
 import net.minecraft.util.math.Box;
 import net.minecraft.world.World;
 
@@ -26,8 +26,8 @@ public class MagnetWandItem extends Item {
     private static final double REPEL_RANGE = 8.0;
     private static final float REPEL_DAMAGE = 6.0f;
 
-    public MagnetWandItem(Settings settings) {
-        super(ToolMaterial.DIAMOND.applyToolSettings(
+    public MagnetWandItem(Properties settings) {
+        super(ToolMaterial.DIAMOND.applyToolProperties(
                 settings,
                 BlockTags.SWORD_EFFICIENT,
                 ATTACK_DAMAGE_BONUS,
@@ -38,19 +38,19 @@ public class MagnetWandItem extends Item {
 
     @Override
     public void postHit(ItemStack stack, LivingEntity target, LivingEntity attacker) {
-        if (attacker instanceof Player player && !attacker.getEntityWorld().isClient()) {
+        if (attacker instanceof Player player && !attacker.getEntityWorld().isClientSide()) {
             MagnetPullManager.recordHit(player, target);
         }
         super.postHit(stack, target, attacker);
     }
 
     @Override
-    public ActionResult use(World world, Player player, Hand hand) {
-        if (hand == Hand.OFF_HAND) return ActionResult.PASS;
-        ItemStack stack = player.getStackInHand(hand);
-        if (player.getItemCooldownManager().isCoolingDown(stack)) return ActionResult.FAIL;
-        if (!world.isClient()) {
-            player.getItemCooldownManager().set(stack, COOLDOWN);
+    public InteractionResult use(World world, Player player, InteractionHand hand) {
+        if (hand == InteractionHand.OFF_HAND) return InteractionResult.PASS;
+        ItemStack stack = player.getStackInInteractionHand(hand);
+        if (player.getCooldowns().isOnCooldown(stack)) return InteractionResult.FAIL;
+        if (!world.isClientSide()) {
+            player.getCooldowns().set(stack, COOLDOWN);
             assert ((ServerLevel) world).getServer() != null;
             WandCooldownState.get(((ServerLevel)world).getServer()).save(player.getUUID(), "magnet", COOLDOWN);
             if (MagnetPullManager.isRepelMode(player)) {
@@ -59,6 +59,6 @@ public class MagnetWandItem extends Item {
                 MagnetPullManager.doAbilityPull(player, ABILITY_PULL_RANGE);
             }
         }
-        return ActionResult.SUCCESS;
+        return InteractionResult.SUCCESS;
     }
 }

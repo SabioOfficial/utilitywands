@@ -153,7 +153,7 @@ public class PhantomModeHandler {
             long currentTick = world.getTime();
             for (Player player : world.getPlayers()) {
                 UUID uuid = player.getUUID();
-                boolean holdingPhantomWand = player.getMainHandStack().getItem() instanceof PhantomWandItem;
+                boolean holdingPhantomWand = player.getMainInteractionHandStack().getItem() instanceof PhantomWandItem;
                 manageReachAttribute(player, holdingPhantomWand);
                 if (!PhantomWandItem.phantomPlayers.contains(uuid)) continue;
                 Long endTick = phantomEndTimes.get(uuid);
@@ -211,7 +211,7 @@ public class PhantomModeHandler {
         }
     }
     public static void initialize() {
-        ServerTickEvents.END_SERVER_TICK.register(PhantomModeHandler::onTick);
+        ServerTickEvents.END_SERVER_TICK.register(PhantomModeInteractionHandler::onTick);
 
         ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
             if (entity instanceof Player player) {
@@ -222,7 +222,7 @@ public class PhantomModeHandler {
             }
             if (source.getAttacker() instanceof Player attacker) {
                 UUID attackerId = attacker.getUUID();
-                if (PhantomWandItem.phantomPlayers.contains(attackerId) && !applyingReducedDamage.contains(attackerId) && attacker.getMainHandStack().getItem() instanceof PhantomWandItem) {
+                if (PhantomWandItem.phantomPlayers.contains(attackerId) && !applyingReducedDamage.contains(attackerId) && attacker.getMainInteractionHandStack().getItem() instanceof PhantomWandItem) {
                     applyingReducedDamage.add(attackerId);
                     entity.damage((ServerLevel) attacker.getEntityWorld(), source, amount * 0.2f);
                     applyingReducedDamage.remove(attackerId);
@@ -265,7 +265,7 @@ public class PhantomModeHandler {
         }
     }
     public static boolean tryPullAttack(ServerPlayer attacker, LivingEntity target) {
-        if (!(attacker.getMainHandStack().getItem() instanceof PhantomWandItem)) {
+        if (!(attacker.getMainInteractionHandStack().getItem() instanceof PhantomWandItem)) {
             return false;
         }
         double distance = attacker.distanceTo(target);
