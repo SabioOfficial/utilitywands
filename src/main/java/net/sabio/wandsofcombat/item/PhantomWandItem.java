@@ -1,15 +1,15 @@
 package net.sabio.wandsofcombat.item;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.Player;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ToolMaterial;
-import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.server.world.ServerLevel;
-import net.minecraft.util.InteractionResult;
-import net.minecraft.util.InteractionHand;
-import net.minecraft.world.World;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ToolMaterial;
+import net.minecraft.world.level.Level;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -32,22 +32,22 @@ public class PhantomWandItem extends Item {
         ));
     }
     @Override
-    public InteractionResult use(World world, Player player, InteractionHand hand) {
-        ItemStack stack = player.getStackInInteractionHand(hand);
+    public InteractionResult use(Level world, Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
         if (player.getCooldowns().isOnCooldown(stack)) {
             return InteractionResult.FAIL;
         }
         if (!world.isClientSide()) {
-            player.getCooldowns().set(stack, ABILITY_COOLDOWN);
+            player.getCooldowns().addCooldown(stack, ABILITY_COOLDOWN);
             assert ((ServerLevel) world).getServer() != null;
             WandCooldownState.get(((ServerLevel)world).getServer()).save(player.getUUID(), "phantom", ABILITY_COOLDOWN);
-            PhantomModeInteractionHandler.activatePhantomMode(player, (ServerLevel) world);
+            PhantomModeHandler.activatePhantomMode(player, (ServerLevel) world);
         }
 
         return InteractionResult.SUCCESS;
     }
     @Override
-    public void postHit(ItemStack stack, LivingEntity target, LivingEntity attacker) {
-        super.postHit(stack, target, attacker);
+    public void postHurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
+        super.postHurtEnemy(stack, target, attacker);
     }
 }

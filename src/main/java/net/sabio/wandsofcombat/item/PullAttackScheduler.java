@@ -1,13 +1,12 @@
 package net.sabio.wandsofcombat.item;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.minecraft.entity.LivingEntity;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayer;
-import net.minecraft.server.world.ServerLevel;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class PullAttackScheduler {
@@ -26,8 +25,8 @@ public class PullAttackScheduler {
         List<ScheduledAttack> toExecute = new ArrayList<>();
         List<ScheduledAttack> toRemove = new ArrayList<>();
         for (ScheduledAttack attack : pending) {
-            for (ServerLevel world : server.getWorlds()) {
-                if (world.getTime() >= attack.executeTick) {
+            for (ServerLevel world : server.getAllLevels()) {
+                if (world.getGameTime() >= attack.executeTick) {
                     toExecute.add(attack);
                     toRemove.add(attack);
                     break;

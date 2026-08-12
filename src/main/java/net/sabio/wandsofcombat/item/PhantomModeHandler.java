@@ -4,18 +4,17 @@ import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.fabricmc.loader.impl.lib.sat4j.core.Vec;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.attribute.EntityAttributeModifier;
-import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.effect.MobEffectInstance;
-import net.minecraft.entity.effect.MobEffects;
-import net.minecraft.entity.player.Player;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayer;
-import net.minecraft.server.world.ServerLevel;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
 import net.sabio.wandsofcombat.Wandsofcombat;
 import net.sabio.wandsofcombat.network.PhantomSyncPacket;
 
@@ -34,15 +33,15 @@ public class PhantomModeHandler {
     private static final double MELEE_RANGE = 3.0;
     private static final double PULL_SPEED = 1.2;
     private static final int PULL_IMMUNITY_DURATION = 10; // immune for 10 ticks after pull
-    private static final Identifier REACH_MODIFIER_ID = Identifier.of(Wandsofcombat.MOD_ID, "phantom_wand_reach");
+    private static final Identifier REACH_MODIFIER_ID = Identifier.fromNamespaceAndPath(Wandsofcombat.MOD_ID, "phantom_wand_reach");
     private static class PullProgress {
         final ServerPlayer attacker;
         final LivingEntity target;
-        final Vec3d startPos;
-        final Vec3d endPos;
+        final Vec3 startPos;
+        final Vec3 endPos;
         int totalTicks;
         int ticksElapsed;
-        PullProgress(ServerPlayer attacker, LivingEntity target, Vec3d startPos, Vec3d endPos, int totalTicks) {
+        PullProgress(ServerPlayer attacker, LivingEntity target, Vec3 startPos, Vec3 endPos, int totalTicks) {
             this.attacker = attacker;
             this.target = target;
             this.startPos = startPos;
@@ -53,10 +52,10 @@ public class PhantomModeHandler {
     }
     private static final Map<UUID, PullProgress> activePulls = new HashMap<>();
     private static void applyPhantomEffects(Player player) {
-        MobEffectInstance existingInvisibility = player.getStatusEffect(MobEffects.INVISIBILITY);
-        MobEffectInstance existingNightVision = player.getStatusEffect(MobEffects.NIGHT_VISION);
-        MobEffectInstance existingSlowness = player.getStatusEffect(MobEffects.SLOWNESS);
-        MobEffectInstance existingBlindness = player.getStatusEffect(MobEffects.BLINDNESS);
+        MobEffectInstance existingInvisibility = player.getEffect(MobEffects.INVISIBILITY);
+        MobEffectInstance existingNightVision = player.getEffect(MobEffects.NIGHT_VISION);
+        MobEffectInstance existingSlowness = player.getEffect(MobEffects.SLOWNESS);
+        MobEffectInstance existingBlindness = player.getEffect(MobEffects.BLINDNESS);
         if (existingInvisibility != null) {
             savedInvisibility.put(player.getUUID(), new MobEffectInstance(existingInvisibility));
         } else {
@@ -77,7 +76,7 @@ public class PhantomModeHandler {
         } else {
             savedBlindness.remove(player.getUUID());
         }
-        player.addStatusEffect(new MobEffectInstance(
+        player.addEffect(new MobEffectInstance(
                 MobEffects.INVISIBILITY,
                 PHANTOM_DURATION,
                 0,
@@ -85,7 +84,7 @@ public class PhantomModeHandler {
                 false,
                 false
         ));
-        player.addStatusEffect(new MobEffectInstance(
+        player.addEffect(new MobEffectInstance(
                 MobEffects.NIGHT_VISION,
                 PHANTOM_DURATION,
                 0,
@@ -93,7 +92,7 @@ public class PhantomModeHandler {
                 false,
                 false
         ));
-        player.addStatusEffect(new MobEffectInstance(
+        player.addEffect(new MobEffectInstance(
                 MobEffects.DARKNESS,
                 PHANTOM_DURATION,
                 0,
@@ -104,56 +103,55 @@ public class PhantomModeHandler {
     }
     private static void removePhantomEffects(Player player) {
         UUID uuid = player.getUUID();
-        player.removeStatusEffect(MobEffects.INVISIBILITY);
-        player.removeStatusEffect(MobEffects.NIGHT_VISION);
-        player.removeStatusEffect(MobEffects.SLOWNESS);
-        player.removeStatusEffect(MobEffects.BLINDNESS);
+        player.removeEffect(MobEffects.INVISIBILITY);
+        player.removeEffect(MobEffects.NIGHT_VISION);
+        player.removeEffect(MobEffects.SLOWNESS);
+        player.removeEffect(MobEffects.BLINDNESS);
         player.setInvisible(false);
         MobEffectInstance savedInvis = savedInvisibility.remove(uuid);
         MobEffectInstance savedNV = savedNightVision.remove(uuid);
         MobEffectInstance savedSlow = savedSlowness.remove(uuid);
         MobEffectInstance savedBlind = savedBlindness.remove(uuid);
         if (savedInvis != null) {
-            player.addStatusEffect(savedInvis);
+            player.addEffect(savedInvis);
         }
         if (savedNV != null) {
-            player.addStatusEffect(savedNV);
+            player.addEffect(savedNV);
         }
         if (savedSlow != null) {
-            player.addStatusEffect(savedSlow);
+            player.addEffect(savedSlow);
         }
         if (savedBlind != null) {
-            player.addStatusEffect(savedSlow);
+            player.addEffect(savedSlow);
         }
         if (!player.isCreative() && !player.isSpectator()) {
             player.getAbilities().flying = false;
-            player.getAbilities().allowFlying = false;
-            player.sendAbilitiesUpdate();
+            player.getAbilities().mayfly = false;
+            player.onUpdateAbilities();
         }
-        player.noClip = false;
         PhantomWandItem.phantomPlayers.remove(uuid);
         if (player instanceof ServerPlayer serverPlayer) {
             ServerPlayNetworking.send(serverPlayer, new PhantomSyncPacket(false));
         }
     }
     private static void manageReachAttribute(Player player, boolean holding) {
-        var reachAttribute = player.getAttributeInstance(EntityAttributes.ENTITY_INTERACTION_RANGE);
+        var reachAttribute = player.getAttribute(Attributes.ENTITY_INTERACTION_RANGE);
         if (reachAttribute == null) return;
         reachAttribute.removeModifier(REACH_MODIFIER_ID);
         if (holding) {
-            reachAttribute.addTemporaryModifier(new EntityAttributeModifier(
+            reachAttribute.addTransientModifier(new AttributeModifier(
                     REACH_MODIFIER_ID,
                     2.0,
-                    EntityAttributeModifier.Operation.ADD_VALUE
+                    AttributeModifier.Operation.ADD_VALUE
             ));
         }
     }
     private static void onTick(MinecraftServer server) {
-        for (ServerLevel world : server.getWorlds()) {
-            long currentTick = world.getTime();
-            for (Player player : world.getPlayers()) {
+        for (ServerLevel world : server.getAllLevels()) {
+            long currentTick = world.getGameTime();
+            for (Player player : world.players()) {
                 UUID uuid = player.getUUID();
-                boolean holdingPhantomWand = player.getMainInteractionHandStack().getItem() instanceof PhantomWandItem;
+                boolean holdingPhantomWand = player.getMainHandItem().getItem() instanceof PhantomWandItem;
                 manageReachAttribute(player, holdingPhantomWand);
                 if (!PhantomWandItem.phantomPlayers.contains(uuid)) continue;
                 Long endTick = phantomEndTimes.get(uuid);
@@ -163,13 +161,12 @@ public class PhantomModeHandler {
                     continue;
                 }
                 player.setInvisible(true);
-                player.noClip = true;
                 if (!player.isCreative() && !player.isSpectator()) {
-                    player.getAbilities().allowFlying = true;
+                    player.getAbilities().mayfly = true;
                     player.getAbilities().flying = true;
-                    player.sendAbilitiesUpdate();
+                    player.onUpdateAbilities();
                 }
-                player.addStatusEffect(new MobEffectInstance(
+                player.addEffect(new MobEffectInstance(
                         MobEffects.SLOWNESS,
                         2,
                         5,
@@ -191,14 +188,14 @@ public class PhantomModeHandler {
                 double x = pull.startPos.x + (pull.endPos.x - pull.startPos.x) * t;
                 double y = pull.startPos.y + (pull.endPos.y - pull.startPos.y) * t;
                 double z = pull.startPos.z + (pull.endPos.z - pull.startPos.z) * t;
-                pull.attacker.teleport(
-                        pull.attacker.getEntityWorld(),
+                pull.attacker.teleportTo(
+                        pull.attacker.level(),
                         x,
                         y,
                         z,
                         java.util.Set.of(),
-                        pull.attacker.getYaw(),
-                        pull.attacker.getPitch(),
+                        pull.attacker.getYRot(),
+                        pull.attacker.getXRot(),
                         false
                 );
                 if (pull.ticksElapsed >= pull.totalTicks) {
@@ -211,20 +208,20 @@ public class PhantomModeHandler {
         }
     }
     public static void initialize() {
-        ServerTickEvents.END_SERVER_TICK.register(PhantomModeInteractionHandler::onTick);
+        ServerTickEvents.END_SERVER_TICK.register(PhantomModeHandler::onTick);
 
         ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
             if (entity instanceof Player player) {
                 Long immunityEnd = pullImmunityEndTimes.get(player.getUUID());
-                if (immunityEnd != null && entity.getEntityWorld().getTime() <= immunityEnd) {
+                if (immunityEnd != null && entity.level().getGameTime() <= immunityEnd) {
                     return false;
                 }
             }
-            if (source.getAttacker() instanceof Player attacker) {
+            if (source.getEntity() instanceof Player attacker) {
                 UUID attackerId = attacker.getUUID();
-                if (PhantomWandItem.phantomPlayers.contains(attackerId) && !applyingReducedDamage.contains(attackerId) && attacker.getMainInteractionHandStack().getItem() instanceof PhantomWandItem) {
+                if (PhantomWandItem.phantomPlayers.contains(attackerId) && !applyingReducedDamage.contains(attackerId) && attacker.getMainHandItem().getItem() instanceof PhantomWandItem) {
                     applyingReducedDamage.add(attackerId);
-                    entity.damage((ServerLevel) attacker.getEntityWorld(), source, amount * 0.2f);
+                    entity.hurtServer((ServerLevel) attacker.level(), source, amount * 0.2f);
                     applyingReducedDamage.remove(attackerId);
                     return false;
                 }
@@ -242,13 +239,12 @@ public class PhantomModeHandler {
             savedSlowness.remove(uuid);
             savedBlindness.remove(uuid);
             activePulls.remove(uuid);
-            handler.player.noClip = false;
             if (!handler.player.isCreative() && !handler.player.isSpectator()) {
-                handler.player.getAbilities().allowFlying = false;
+                handler.player.getAbilities().mayfly = false;
                 handler.player.getAbilities().flying = false;
-                handler.player.sendAbilitiesUpdate();
+                handler.player.onUpdateAbilities();
             }
-            var reachAttribute = handler.player.getAttributeInstance(EntityAttributes.ENTITY_INTERACTION_RANGE);
+            var reachAttribute = handler.player.getAttribute(Attributes.ENTITY_INTERACTION_RANGE);
             if (reachAttribute != null) {
                 reachAttribute.removeModifier(REACH_MODIFIER_ID);
             }
@@ -256,7 +252,7 @@ public class PhantomModeHandler {
     }
     public static void activatePhantomMode(Player player, ServerLevel world) {
         UUID uuid = player.getUUID();
-        long endTick = world.getTime() + PHANTOM_DURATION;
+        long endTick = world.getGameTime() + PHANTOM_DURATION;
         phantomEndTimes.put(uuid, endTick);
         PhantomWandItem.phantomPlayers.add(uuid);
         applyPhantomEffects(player);
@@ -265,24 +261,24 @@ public class PhantomModeHandler {
         }
     }
     public static boolean tryPullAttack(ServerPlayer attacker, LivingEntity target) {
-        if (!(attacker.getMainInteractionHandStack().getItem() instanceof PhantomWandItem)) {
+        if (!(attacker.getMainHandItem().getItem() instanceof PhantomWandItem)) {
             return false;
         }
         double distance = attacker.distanceTo(target);
         if (distance <= MELEE_RANGE || distance > PULL_RANGE) {
             return false;
         }
-        long immunityEnd = (attacker.getEntityWorld()).getTime() + PULL_IMMUNITY_DURATION + 5;
+        long immunityEnd = (attacker.level()).getGameTime() + PULL_IMMUNITY_DURATION + 5;
         pullImmunityEndTimes.put(attacker.getUUID(), immunityEnd);
         PhantomWandItem.pullingPlayers.add(attacker.getUUID());
-        Vec3d direction = target.getEntityPos().subtract(attacker.getEntityPos()).normalize();
+        Vec3 direction = target.position().subtract(attacker.position()).normalize();
         double pullDistance = distance - MELEE_RANGE + 0.5;
-        Vec3d destination = attacker.getEntityPos().add(direction.multiply(pullDistance));
+        Vec3 destination = attacker.position().add(direction.scale(pullDistance));
 
         activePulls.put(attacker.getUUID(), new PullProgress(
                 attacker,
                 target,
-                attacker.getEntityPos(),
+                attacker.position(),
                 destination,
                 8
         ));

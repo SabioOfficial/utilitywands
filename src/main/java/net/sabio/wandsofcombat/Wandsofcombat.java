@@ -2,8 +2,9 @@ package net.sabio.wandsofcombat;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.sabio.wandsofcombat.item.*;
 import net.sabio.wandsofcombat.network.PhantomSyncPacket;
 
@@ -18,16 +19,16 @@ public class Wandsofcombat implements ModInitializer {
     public void onInitialize() {
         ModItems.initialize();
         MagnetPullManager.initialize();
-        ElectricWandLightningInteractionHandler.initialize();
-        ElectricWandPassiveInteractionHandler.initialize();
-        LightningStrikeInteractionHandler.initialize();
-        PhantomModeInteractionHandler.initialize();
+        ElectricWandLightningHandler.initialize();
+        ElectricWandPassiveHandler.initialize();
+        LightningStrikeHandler.initialize();
+        PhantomModeHandler.initialize();
         PullAttackScheduler.initialize();
         PhantomSyncPacket.initialize();
-        MagmaWandInteractionHandler.initialize();
-        IceWandComboInteractionHandler.initialize();
+        MagmaWandHandler.initialize();
+        IceWandComboHandler.initialize();
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
-            net.minecraft.server.network.ServerPlayer player = handler.player;
+            ServerPlayer player = handler.player;
             WandCooldownState state = WandCooldownState.get(server);
             UUID id = player.getUUID();
             for (String key : new String[]{"magnet","ice","electric","phantom","magma_ability","magma_ultimate"}) {
@@ -40,7 +41,7 @@ public class Wandsofcombat implements ModInitializer {
                         case "phantom" -> ModItems.PHANTOM_WAND;
                         default -> ModItems.MAGMA_WAND;
                     };
-                    player.getCooldowns().set(new ItemStack(item), ticks);
+                    player.getCooldowns().addCooldown(new ItemStack(item), ticks);
                 }
             }
         });

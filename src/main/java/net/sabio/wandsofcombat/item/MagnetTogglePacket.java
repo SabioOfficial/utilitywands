@@ -2,23 +2,23 @@ package net.sabio.wandsofcombat.item;
 
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.Identifier;
 import net.sabio.wandsofcombat.Wandsofcombat;
 
 public class MagnetTogglePacket {
-    public record Payload() implements CustomPayload {
-        public static final CustomPayload.Id<Payload> ID = new CustomPayload.Id<>(Identifier.of(Wandsofcombat.MOD_ID, "magnet_toggle"));
-        public static final PacketCodec<PacketByteBuf, Payload> CODEC = PacketCodec.unit(new Payload());
+    public record Payload() implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<Payload> ID = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(Wandsofcombat.MOD_ID, "magnet_toggle"));
+        public static final StreamCodec<FriendlyByteBuf, Payload> CODEC = StreamCodec.unit(new Payload());
         @Override
-        public CustomPayload.Id<? extends CustomPayload> getId() {
+        public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
             return ID;
         }
     }
     public static void initializeServer() {
-        PayloadTypeRegistry.playC2S().register(Payload.ID, Payload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(Payload.ID, Payload.CODEC);
         ServerPlayNetworking.registerGlobalReceiver(Payload.ID, (payload, context) ->
                 context.server().execute(() ->
                         MagnetPullManager.toggleRepelMode(context.player())));
