@@ -19,6 +19,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.sabio.wandsofcombat.mana.ManaCosts;
+import net.sabio.wandsofcombat.mana.ManaManager;
 
 import java.util.*;
 
@@ -30,7 +32,6 @@ public class MagmaWandHandler {
     private static final Map<UUID, Set<BlockPos>> fireRingBlocks = new HashMap<>();
     private static final Set<UUID> wandFireballEntities = new HashSet<>();
     private static final Map<UUID, Long> fireballExpiryTimes = new HashMap<>();
-    private static final Map<UUID, Long> ultimateCooldownEndTimes = new HashMap<>();
     private static final Map<UUID, Long> absorptionGrantTick = new HashMap<>();
     private static final Map<UUID, Long> absorptionGrantedAt = new HashMap<>();
     private static final int NO_DAMAGE_DURATION = 600; // how many ticks you have to not have taken damage for the absorption hearts
@@ -224,14 +225,6 @@ public class MagmaWandHandler {
             UUID uuid = handler.player.getUUID();
             long joinTick = handler.player.level().getGameTime();
             lastDamageTick.put(uuid, joinTick + 40);
-            WandCooldownState state = WandCooldownState.get(server);
-            int abilityTicks = state.getRemainingTicks(uuid, "magma_ability");
-            int ultimateTicks = state.getRemainingTicks(uuid, "magma_ultimate");
-            int ticks = Math.max(abilityTicks, ultimateTicks);
-            if (ticks > 0) {
-                ItemStack wandStack = handler.player.getMainHandItem().getItem() instanceof MagmaWandItem ? handler.player.getMainHandItem() : handler.player.getOffhandItem();
-                handler.player.getCooldowns().addCooldown(wandStack, ticks);
-            }
         });
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
             UUID uuid = handler.player.getUUID();
@@ -243,7 +236,6 @@ public class MagmaWandHandler {
                 removeFireRing(handler.player, serverLevel);
             }
             fireRingBlocks.remove(uuid);
-            ultimateCooldownEndTimes.remove(uuid);
             MagmaWandItem.hitCounters.remove(uuid);
             absorptionGrantTick.remove(uuid);
             absorptionGrantedAt.remove(uuid);
@@ -263,35 +255,21 @@ public class MagmaWandHandler {
     }
     public static void tryActivateAbility(Player player) {
         if (!(player instanceof ServerPlayer serverPlayer)) return;
-        if (serverPlayer.getCooldowns().isOnCooldown(player.getMainHandItem()) || serverPlayer.getCooldowns().isOnCooldown(player.getOffhandItem())) return;
+        if (abilityEndTimes.containsKey(player.getUUID()) || ultimateEndTimes.containsKey(player.getUUID())) return;
+        if (!ManaManager.tryConsume(player, ManaCosts.MAGMA_ABILITY)) return;
         UUID uuid = player.getUUID();
         ServerLevel world = serverPlayer.level();
         abilityEndTimes.put(uuid, world.getGameTime() + MagmaWandItem.ABILITY_DURATION);
-        player.addEffect(new MobEffectInstance(
-                MobEffects.FIRE_RESISTANCE,
-                MagmaWandItem.ABILITY_DURATION,
-                0,
-                false,
-                true,
-                true
-        ));
-        ItemStack wandStack = player.getMainHandItem().getItem() instanceof MagmaWandItem ? player.getMainHandItem() : player.getOffhandItem();
-        serverPlayer.getCooldowns().addCooldown(wandStack, MagmaWandItem.ABILITY_COOLDOWN + MagmaWandItem.ABILITY_DURATION);
-        WandCooldownState.get(Objects.requireNonNull(serverPlayer.level().getServer())).save(uuid, "magma_ability", MagmaWandItem.ABILITY_COOLDOWN + MagmaWandItem.ABILITY_DURATION);
+        player.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, MagmaWandItem.ABILITY_DURATION, 0, false, true, true));
     }
     public static void tryActivateUltimate(Player player) {
         if (!(player instanceof ServerPlayer serverPlayer)) return;
         UUID uuid = player.getUUID();
-        if (ultimateEndTimes.containsKey(uuid)) return;
-        long currentTick = serverPlayer.level().getGameTime();
-        Long cooldownEnd = ultimateCooldownEndTimes.get(uuid);
-        if (cooldownEnd != null && currentTick < cooldownEnd) return;
+        if (ultimateEndTimes.containsKey(uuid) || abilityEndTimes.containsKey(uuid)) return;
+        if (!ManaManager.tryConsume(player, ManaCosts.MAGMA_ULTIMATE)) return;
         ServerLevel world = serverPlayer.level();
         ultimateEndTimes.put(uuid, world.getGameTime() + MagmaWandItem.ULTIMATE_DURATION);
         buildFireRing(player, world);
-        ItemStack wandStack = player.getMainHandItem().getItem() instanceof MagmaWandItem ? player.getMainHandItem() : player.getOffhandItem();
-        serverPlayer.getCooldowns().addCooldown(wandStack, MagmaWandItem.ULTIMATE_DURATION + MagmaWandItem.ULTIMATE_COOLDOWN);
-        WandCooldownState.get(Objects.requireNonNull(serverPlayer.level().getServer())).save(uuid, "magma_ultimate", MagmaWandItem.ULTIMATE_DURATION + MagmaWandItem.ULTIMATE_COOLDOWN);
     }
     private static Set<BlockPos> computeRingPositions(Player player, ServerLevel world) {
         Set<BlockPos> positions = new HashSet<>();
@@ -431,7 +409,6 @@ public class MagmaWandHandler {
                     if (currentTick >= ultimateEnd) {
                         ultimateEndTimes.remove(uuid);
                         removeFireRing(player, world);
-                        ultimateCooldownEndTimes.put(uuid, currentTick + MagmaWandItem.ULTIMATE_COOLDOWN + MagmaWandItem.ULTIMATE_DURATION);
                     } else if (currentTick % 5 == 0) {
                         updateFireRing(player, world);
                     }

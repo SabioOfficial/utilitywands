@@ -6,6 +6,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.sabio.wandsofcombat.item.*;
+import net.sabio.wandsofcombat.mana.ManaManager;
+import net.sabio.wandsofcombat.network.ManaSyncPacket;
 import net.sabio.wandsofcombat.network.PhantomSyncPacket;
 
 import java.util.UUID;
@@ -27,23 +29,7 @@ public class Wandsofcombat implements ModInitializer {
         PhantomSyncPacket.initialize();
         MagmaWandHandler.initialize();
         IceWandComboHandler.initialize();
-        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
-            ServerPlayer player = handler.player;
-            WandCooldownState state = WandCooldownState.get(server);
-            UUID id = player.getUUID();
-            for (String key : new String[]{"magnet","ice","electric","phantom","magma_ability","magma_ultimate"}) {
-                int ticks = state.getRemainingTicks(id, key);
-                if (ticks > 0) {
-                    Item item = switch (key) {
-                        case "magnet" -> ModItems.MAGNET_WAND;
-                        case "ice" -> ModItems.ICE_WAND;
-                        case "electric" -> ModItems.ELECTRIC_WAND;
-                        case "phantom" -> ModItems.PHANTOM_WAND;
-                        default -> ModItems.MAGMA_WAND;
-                    };
-                    player.getCooldowns().addCooldown(new ItemStack(item), ticks);
-                }
-            }
-        });
+        ManaSyncPacket.initialize();
+        ManaManager.initialize();
     }
 }

@@ -1,6 +1,5 @@
 package net.sabio.wandsofcombat.item;
 
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
