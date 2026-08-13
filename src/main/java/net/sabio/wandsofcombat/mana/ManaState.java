@@ -13,14 +13,14 @@ import java.util.Map;
 import java.util.UUID;
 
 public class ManaState extends SavedData {
-    private final Map<UUID, Integer> manaQuarters;
+    private final Map<UUID, Integer> manaPoints;
 
-    private ManaState(Map<UUID, Integer> manaQuarters) {
-        this.manaQuarters = new HashMap<>(manaQuarters);
+    private ManaState(Map<UUID, Integer> manaPoints) {
+        this.manaPoints = new HashMap<>(manaPoints);
     }
 
     public ManaState() {
-        this.manaQuarters = new HashMap<>();
+        this.manaPoints = new HashMap<>();
     }
 
     private static final Codec<ManaState> CODEC = Codec.unboundedMap(Codec.STRING, Codec.INT).xmap(
@@ -35,7 +35,7 @@ public class ManaState extends SavedData {
             },
             manaState -> {
                 Map<String, Integer> result = new HashMap<>();
-                manaState.manaQuarters.forEach((key, value) -> result.put(key.toString(), value));
+                manaState.manaPoints.forEach((key, value) -> result.put(key.toString(), value));
                 return result;
             }
     );
@@ -51,17 +51,17 @@ public class ManaState extends SavedData {
         return server.getLevel(ServerLevel.OVERWORLD).getDataStorage().computeIfAbsent(TYPE);
     }
 
-    public int getQuarters(UUID player) {
-        return manaQuarters.getOrDefault(player, ManaManager.MAX_MANA_QUARTERS);
+    public int getPoints(UUID player) {
+        return manaPoints.getOrDefault(player, ManaManager.MAX_MANA_POINTS);
     }
 
-    public void setQuarters(UUID player, int quarters) {
-        manaQuarters.put(player, Math.clamp(quarters, 0, ManaManager.MAX_MANA_QUARTERS));
+    public void setPoints(UUID player, int points) {
+        manaPoints.put(player, Math.clamp(points, 0, ManaManager.MAX_MANA_POINTS));
         setDirty();
     }
 
     public void remove(UUID player) {
-        manaQuarters.remove(player);
+        manaPoints.remove(player);
         setDirty();
     }
 }

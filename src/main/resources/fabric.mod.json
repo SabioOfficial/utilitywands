@@ -3,8 +3,8 @@
   "id": "wandsofcombat",
   "version": "${version}",
   "name": "wandsofcombat",
-  "description": "Utility-based wands!",
-  "authors": [],
+  "description": "A combat-specialized magic expansion featuring uniquely crafted wands with special abilities, ultimates, and passives.",
+  "authors": ["Sabio"],
   "contact": {},
   "license": "GPL-3.0",
   "icon": "assets/wandsofcombat/icon.png",
@@ -15,7 +15,8 @@
     ],
     "client": [
       "net.sabio.wandsofcombat.client.WandsofcombatClient",
-      "net.sabio.wandsofcombat.client.PhantomSyncClient"
+      "net.sabio.wandsofcombat.client.PhantomSyncClient",
+      "net.sabio.wandsofcombat.client.ManaSyncClient"
     ],
     "main": [
       "net.sabio.wandsofcombat.Wandsofcombat"

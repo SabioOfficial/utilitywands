@@ -16,6 +16,7 @@ public class WandsofcombatClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         MagnetTogglePacket.initializeClient();
+        ManaHudRenderer.initialize();
         KeyMapping.Category wandsCategory;
         try {
             wandsCategory = KeyMapping.Category.register(Identifier.fromNamespaceAndPath(Wandsofcombat.MOD_ID, "wands"));
