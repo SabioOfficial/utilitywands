@@ -8,6 +8,8 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
@@ -130,6 +132,9 @@ public class PhantomModeHandler {
             player.onUpdateAbilities();
         }
         PhantomWandItem.phantomPlayers.remove(uuid);
+        if (player.level() instanceof ServerLevel serverLevel) {
+            serverLevel.playSeededSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.PHANTOM_FLAP, SoundSource.PLAYERS, 0.8f, 0.9f, serverLevel.getRandom().nextLong());
+        }
         if (player instanceof ServerPlayer serverPlayer) {
             ServerPlayNetworking.send(serverPlayer, new PhantomSyncPacket(false));
         }
@@ -256,6 +261,8 @@ public class PhantomModeHandler {
         phantomEndTimes.put(uuid, endTick);
         PhantomWandItem.phantomPlayers.add(uuid);
         applyPhantomEffects(player);
+        world.playSeededSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.PHANTOM_AMBIENT, SoundSource.PLAYERS, 1.0f, 1.3f, world.getRandom().nextLong());
+        world.playSeededSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.8f, 1.5f, world.getRandom().nextLong());
         if (player instanceof ServerPlayer serverPlayer) {
             ServerPlayNetworking.send(serverPlayer, new PhantomSyncPacket(true));
         }
@@ -271,6 +278,7 @@ public class PhantomModeHandler {
         long immunityEnd = (attacker.level()).getGameTime() + PULL_IMMUNITY_DURATION + 5;
         pullImmunityEndTimes.put(attacker.getUUID(), immunityEnd);
         PhantomWandItem.pullingPlayers.add(attacker.getUUID());
+        attacker.level().playSeededSound(null, attacker.getX(), attacker.getY(), attacker.getZ(), SoundEvents.PHANTOM_BITE, SoundSource.PLAYERS, 1.0f, 1.2f, attacker.level().getRandom().nextLong());
         Vec3 direction = target.position().subtract(attacker.position()).normalize();
         double pullDistance = distance - MELEE_RANGE + 0.5;
         Vec3 destination = attacker.position().add(direction.scale(pullDistance));

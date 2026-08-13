@@ -1,5 +1,7 @@
 package net.sabio.wandsofcombat.item;
 
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
@@ -67,6 +69,7 @@ public class ElectricWandItem extends Item {
         if (!world.isClientSide()) {
             ServerLevel ServerLevel = (ServerLevel) world;
             if (!ManaManager.tryConsume(player, ManaCosts.ELECTRIC_WAND)) return InteractionResult.FAIL;
+            ServerLevel.playSeededSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.TRIDENT_THUNDER, SoundSource.PLAYERS, 1.0f, 1.4f, ServerLevel.getRandom().nextLong());
             AABB box = player.getBoundingBox().inflate(ABILITY_RANGE);
             List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, box, entity -> entity != player && !entity.isRemoved());
             if (!targets.isEmpty()) {

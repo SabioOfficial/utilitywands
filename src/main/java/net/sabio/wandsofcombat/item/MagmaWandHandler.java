@@ -10,6 +10,8 @@ import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -260,6 +262,7 @@ public class MagmaWandHandler {
         UUID uuid = player.getUUID();
         ServerLevel world = serverPlayer.level();
         abilityEndTimes.put(uuid, world.getGameTime() + MagmaWandItem.ABILITY_DURATION);
+        world.playSeededSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 1.0f, 0.7f, world.getRandom().nextLong());
         player.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, MagmaWandItem.ABILITY_DURATION, 0, false, true, true));
     }
     public static void tryActivateUltimate(Player player) {
@@ -269,6 +272,8 @@ public class MagmaWandHandler {
         if (!ManaManager.tryConsume(player, ManaCosts.MAGMA_ULTIMATE)) return;
         ServerLevel world = serverPlayer.level();
         ultimateEndTimes.put(uuid, world.getGameTime() + MagmaWandItem.ULTIMATE_DURATION);
+        world.playSeededSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1.0f, 0.8f, world.getRandom().nextLong());
+        world.playSeededSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.FIRE_AMBIENT, SoundSource.PLAYERS, 1.5f, 0.8f, world.getRandom().nextLong());
         buildFireRing(player, world);
     }
     private static Set<BlockPos> computeRingPositions(Player player, ServerLevel world) {

@@ -9,6 +9,8 @@ import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -98,6 +100,7 @@ public class MagnetPullManager {
         AABB box = player.getBoundingBox().inflate(range);
         List<LivingEntity> entities = world.getEntitiesOfClass(LivingEntity.class, box, entity -> entity != player && !entity.isRemoved());
         Vec3 playerPos = player.position();
+        world.playSeededSound(null, playerPos.x, playerPos.y, playerPos.z, SoundEvents.EVOKER_PREPARE_SUMMON, SoundSource.PLAYERS, 1.0f, 1.6f, world.getRandom().nextLong());
         spawnRing(world, playerPos.add(0, player.getBbHeight() / 2.0, 0), range, 0x4488FF);
         for (LivingEntity entity : entities) {
             float multiplier = getSpeedMultiplier(player, entity);
@@ -131,6 +134,7 @@ public class MagnetPullManager {
         AABB box = player.getBoundingBox().inflate(range);
         List<LivingEntity> entities = world.getEntitiesOfClass(LivingEntity.class, box, entity -> entity != player && !entity.isRemoved());
         Vec3 playerPosition = player.position();
+        world.playSeededSound(null, playerPosition.x, playerPosition.y, playerPosition.z, SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 0.7f, 1.5f, world.getRandom().nextLong());
         spawnRing(world, playerPosition.add(0, player.getBbHeight() / 2.0, 0), range, 0xFF4422);
         world.sendParticles(ParticleTypes.EXPLOSION, playerPosition.x, playerPosition.y + 1, playerPosition.z, 3, 0.3, 0.3, 0.3, 0.1);
         world.sendParticles(ParticleTypes.FLAME, playerPosition.x, playerPosition.y + 1, playerPosition.z, 20, 0.5, 0.5, 0.5, 0.15);

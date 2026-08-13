@@ -4,6 +4,8 @@ import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -35,6 +37,10 @@ public class IceWandItem extends Item {
 
     private boolean applyAbility(Level world, Player player) {
         boolean hitPlayer = false;
+        if (world instanceof ServerLevel castSoundLevel) {
+            castSoundLevel.playSeededSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.GLASS_BREAK, SoundSource.PLAYERS, 1.0f, 0.7f, castSoundLevel.getRandom().nextLong());
+            castSoundLevel.playSeededSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.PLAYER_HURT_FREEZE, SoundSource.PLAYERS, 0.6f, 1.6f, castSoundLevel.getRandom().nextLong());
+        }
         AABB mobBox = player.getBoundingBox().inflate(LITE_RANGE);
         List<LivingEntity> nearbyMobs = world.getEntitiesOfClass(LivingEntity.class, mobBox, entity -> !(entity instanceof Player) && !entity.isRemoved());
         for (LivingEntity mob : nearbyMobs) {
@@ -51,6 +57,7 @@ public class IceWandItem extends Item {
             mob.hurtMarked = true;
 
             if (world instanceof ServerLevel ServerLevel) {
+                ServerLevel.playSeededSound(null, mob.getX(), mob.getY(), mob.getZ(), SoundEvents.POWDER_SNOW_HIT, SoundSource.PLAYERS, 0.8f, 1.0f, ServerLevel.getRandom().nextLong());
                 ServerLevel.sendParticles(
                         ParticleTypes.SNOWFLAKE,
                         mob.getX(),
@@ -104,6 +111,7 @@ public class IceWandItem extends Item {
             target.setTicksFrozen(POWDER_SNOW_FREEZE_DURATION);
             hitPlayer = true;
             if (world instanceof ServerLevel ServerLevel) {
+                ServerLevel.playSeededSound(null, target.getX(), target.getY(), target.getZ(), SoundEvents.POWDER_SNOW_HIT, SoundSource.PLAYERS, 0.8f, 0.9f, ServerLevel.getRandom().nextLong());
                 ServerLevel.sendParticles(
                         ParticleTypes.SNOWFLAKE,
                         target.getX(),
