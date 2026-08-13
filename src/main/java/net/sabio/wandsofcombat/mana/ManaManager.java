@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import net.sabio.wandsofcombat.effect.ModEffects;
 import net.sabio.wandsofcombat.network.ManaSyncPacket;
 
 import java.util.HashMap;
@@ -29,7 +30,7 @@ public class ManaManager {
             UUID uuid = player.getUUID();
             int loaded = ManaState.get(server).getPoints(uuid);
             manaPoints.put(uuid, loaded);
-            nextRegenTick.put(uuid, player.level().getGameTime() + REGEN_INTERVAL_TICKS);
+            nextRegenTick.put(uuid, player.level().getGameTime() + effectiveRegenInterval(player));
             syncToClient(player);
         });
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
@@ -46,10 +47,10 @@ public class ManaManager {
             UUID uuid = player.getUUID();
             int current = manaPoints.getOrDefault(uuid, MAX_MANA_POINTS);
             if (current >= MAX_MANA_POINTS) continue;
-            long next = nextRegenTick.getOrDefault(uuid, currentTick + REGEN_INTERVAL_TICKS);
+            long next = nextRegenTick.getOrDefault(uuid, currentTick + effectiveRegenInterval(player));
             if (currentTick >= next) {
                 setPoints(player, current + 1);
-                nextRegenTick.put(uuid, currentTick + REGEN_INTERVAL_TICKS);
+                nextRegenTick.put(uuid, currentTick + effectiveRegenInterval(player));
             }
         }
     }
@@ -67,7 +68,7 @@ public class ManaManager {
         int current = manaPoints.getOrDefault(uuid, MAX_MANA_POINTS);
         if (current < costPoints) return false;
         setPoints(player, current - costPoints);
-        nextRegenTick.put(uuid, player.level().getGameTime() + REGEN_INTERVAL_TICKS);
+        nextRegenTick.put(uuid, player.level().getGameTime() + effectiveRegenInterval(player));
         return true;
     }
 
@@ -75,6 +76,14 @@ public class ManaManager {
         int clamped = Math.clamp(points, 0, MAX_MANA_POINTS);
         manaPoints.put(player.getUUID(), clamped);
         if (player instanceof ServerPlayer serverPlayer) syncToClient(serverPlayer);
+    }
+
+    private static int effectiveRegenInterval(Player player) {
+        var effect = player.getEffect(ModEffects.MANA_REGENERATION);
+        if (effect == null) return REGEN_INTERVAL_TICKS;
+        int amplifier = effect.getAmplifier();
+        int divisor = amplifier + 2;
+        return Math.max(1, REGEN_INTERVAL_TICKS / divisor);
     }
 
     private static void syncToClient(ServerPlayer player) {
