@@ -60,10 +60,16 @@ public class ManaManager {
     }
 
     public static boolean hasEnough(Player player, int costPoints) {
+        if (player.isCreative()) {
+            return true;
+        }
         return manaPoints.getOrDefault(player.getUUID(), MAX_MANA_POINTS) >= costPoints;
     }
 
     public static boolean tryConsume(Player player, int costPoints) {
+        if (player.isCreative()) {
+            return true;
+        }
         UUID uuid = player.getUUID();
         int current = manaPoints.getOrDefault(uuid, MAX_MANA_POINTS);
         if (current < costPoints) return false;
