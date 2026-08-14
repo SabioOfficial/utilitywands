@@ -1,0 +1,52 @@
+{
+  "providers": [
+    {
+      "type": "bitmap",
+      "file": "wandsofcombat:font/badge_passive.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": ["\uE000\uE001\uE002\uE003\uE006"]
+    },
+    {
+      "type": "bitmap",
+      "file": "wandsofcombat:font/badge_combo.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": ["\uE010\uE011\uE012\uE013\uE014"]
+    },
+    {
+      "type": "bitmap",
+      "file": "wandsofcombat:font/badge_ability.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": ["\uE020\uE021\uE022\uE023\uE024"]
+    },
+    {
+      "type": "bitmap",
+      "file": "wandsofcombat:font/badge_alt_ability.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": ["\uE030\uE031\uE032"]
+    },
+    {
+      "type": "bitmap",
+      "file": "wandsofcombat:font/mana_icon.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": ["\uE004"]
+    },
+    {
+      "type": "bitmap",
+      "file": "wandsofcombat:font/right_click_icon.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": ["\uE005"]
+    },
+    {
+      "type": "space",
+      "advances": {
+        "\uE00F": -1
+      }
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 package net.sabio.wandsofcombat.item;
 
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -8,9 +10,13 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ToolMaterial;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.Level;
 import net.sabio.wandsofcombat.mana.ManaCosts;
 import net.sabio.wandsofcombat.mana.ManaManager;
+
+import java.util.function.Consumer;
 
 public class MagnetWandItem extends Item {
     private static final float ATTACK_DAMAGE_BONUS = 3.0f;
@@ -50,5 +56,54 @@ public class MagnetWandItem extends Item {
             }
         }
         return InteractionResult.SUCCESS;
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay displayComponent, Consumer<Component> tooltip, TooltipFlag flag) {
+        super.appendHoverText(stack, context, displayComponent, tooltip, flag);
+
+        tooltip.accept(Component.empty()
+                .append(TooltipIcons.icon(TooltipIcons.BADGE_PASSIVE))
+                .append(Component.literal(" "))
+                .append(TooltipIcons.title("Magnification", ChatFormatting.AQUA)));
+        tooltip.accept(Component.literal("Pull dropped items and XP orbs").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.literal("towards you in an " + (int) ABILITY_PULL_RANGE + " block radius.").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.empty());
+
+        tooltip.accept(Component.empty()
+                .append(TooltipIcons.icon(TooltipIcons.BADGE_COMBO))
+                .append(Component.literal(" "))
+                .append(TooltipIcons.title("Magnetization", ChatFormatting.GOLD))
+                .append(Component.literal(" \uD83D\uDDE11").withStyle(ChatFormatting.WHITE)));
+        tooltip.accept(Component.literal("Increases pull speed by 8% for one entity,").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.literal("which resets every 2 minutes.").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.empty());
+
+        tooltip.accept(Component.empty()
+                .append(TooltipIcons.icon(TooltipIcons.BADGE_ABILITY))
+                .append(Component.literal(" "))
+                .append(TooltipIcons.icon(TooltipIcons.RIGHT_CLICK_ICON))
+                .append(Component.literal(" "))
+                .append(TooltipIcons.title("Attraction", ChatFormatting.RED))
+                .append(Component.literal(" "))
+                .append(TooltipIcons.icon(TooltipIcons.MANA_ICON))
+                .append(Component.literal(String.valueOf(ManaCosts.MAGNET_WAND)).withStyle(ChatFormatting.AQUA)));
+        tooltip.accept(Component.literal("Pulls entities in a " + (int) ABILITY_PULL_RANGE + " block radius").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.literal("towards you.").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.empty());
+
+        tooltip.accept(Component.empty()
+                .append(TooltipIcons.icon(TooltipIcons.BADGE_ALT_ABILITY))
+                .append(Component.literal(" "))
+                .append(Component.literal("R").withStyle(ChatFormatting.BOLD, ChatFormatting.UNDERLINE, ChatFormatting.WHITE))
+                .append(Component.literal(" "))
+                .append(TooltipIcons.icon(TooltipIcons.RIGHT_CLICK_ICON))
+                .append(Component.literal(" "))
+                .append(TooltipIcons.title("Repulsion", ChatFormatting.GRAY))
+                .append(Component.literal(" "))
+                .append(TooltipIcons.icon(TooltipIcons.MANA_ICON))
+                .append(Component.literal(String.valueOf(ManaCosts.MAGNET_WAND)).withStyle(ChatFormatting.AQUA)));
+        tooltip.accept(Component.literal("Knocks back entities in an " + (int) REPEL_RANGE + " block radius,").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.literal("doing ❤" + ((int) (REPEL_DAMAGE / 2)) + " to the repelled entities.").withStyle(ChatFormatting.GRAY));
     }
 }
