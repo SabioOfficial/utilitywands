@@ -43,6 +43,13 @@
       "chars": ["\uE005"]
     },
     {
+      "type": "bitmap",
+      "file": "wandsofcombat:font/skeleton.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": ["\uE007"]
+    },
+    {
       "type": "space",
       "advances": {
         "\uE00F": -1

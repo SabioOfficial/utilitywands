@@ -19,6 +19,7 @@ public final class TooltipIcons {
     public static final String BADGE_ALT_ABILITY = "\uE030\uE00F\uE031\uE00F\uE032";
     public static final String MANA_ICON = "\uE004";
     public static final String RIGHT_CLICK_ICON = "\uE005";
+    public static final String SKELETON_ICON = "\uE007";
 
     public static Component icon(String glyphs) {
         return Component.literal(glyphs).withStyle(Style.EMPTY.withFont(new FontDescription.Resource(FONT)));

@@ -1,5 +1,7 @@
 package net.sabio.wandsofcombat.item;
 
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
@@ -11,6 +13,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ToolMaterial;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.sabio.wandsofcombat.mana.ManaCosts;
@@ -20,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public class ElectricWandItem extends Item {
     private static final float ATTACK_DAMAGE_BONUS = 4.0f; // total atk damage: 8
@@ -77,5 +82,43 @@ public class ElectricWandItem extends Item {
             }
         }
         return InteractionResult.SUCCESS;
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay displayComponent, Consumer<Component> tooltip, TooltipFlag flag) {
+        super.appendHoverText(stack, context, displayComponent, tooltip, flag);
+
+        tooltip.accept(Component.empty()
+                .append(TooltipIcons.icon(TooltipIcons.BADGE_PASSIVE))
+                .append(Component.literal(" "))
+                .append(TooltipIcons.title("Electric Negation", ChatFormatting.AQUA)));
+        tooltip.accept(Component.literal("Receive immunity to all electric damage.").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.empty());
+
+        tooltip.accept(Component.empty()
+                .append(TooltipIcons.icon(TooltipIcons.BADGE_COMBO))
+                .append(Component.literal(" "))
+                .append(TooltipIcons.title("Zap", ChatFormatting.GOLD))
+                .append(Component.literal(" \uD83D\uDDE13").withStyle(ChatFormatting.WHITE)));
+        tooltip.accept(Component.literal("Summon a lightning bolt that hits the enemy,").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.literal("doing ❤2.5 to struck entities.").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.empty());
+
+        tooltip.accept(Component.empty()
+                .append(TooltipIcons.icon(TooltipIcons.BADGE_ABILITY))
+                .append(Component.literal(" "))
+                .append(TooltipIcons.icon(TooltipIcons.RIGHT_CLICK_ICON))
+                .append(Component.literal(" "))
+                .append(TooltipIcons.title("Thunderstorm", ChatFormatting.RED))
+                .append(Component.literal(" "))
+                .append(TooltipIcons.icon(TooltipIcons.MANA_ICON))
+                .append(Component.literal(String.valueOf(ManaCosts.ELECTRIC_WAND)).withStyle(ChatFormatting.AQUA)));
+        tooltip.accept(Component.literal("Strikes thrice on enemies in a " + (int) ABILITY_RANGE + " block").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.literal("radius and stun them for 1.5s. If the enemy").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.literal("has not been slain after the strikes, a").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.empty()
+                .append(TooltipIcons.icon(TooltipIcons.SKELETON_ICON))
+                .append(Component.literal(" Skeleton with a stone sword will spawn").withStyle(ChatFormatting.GRAY)));
+        tooltip.accept(Component.literal("to slay the enemy.").withStyle(ChatFormatting.GRAY));
     }
 }
