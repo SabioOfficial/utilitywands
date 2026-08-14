@@ -17,6 +17,7 @@ public final class TooltipIcons {
     public static final String BADGE_COMBO = "\uE010\uE00F\uE011\uE00F\uE012\uE00F\uE013\uE00F\uE014";
     public static final String BADGE_ABILITY = "\uE020\uE00F\uE021\uE00F\uE022\uE00F\uE023\uE00F\uE024";
     public static final String BADGE_ALT_ABILITY = "\uE030\uE00F\uE031\uE00F\uE032";
+    public static final String BADGE_ULTIMATE = "\uE040\uE00F\uE041\uE00F\uE042\uE00F\uE043\uE00F\uE044\uE00F\uE045\uE00F";
     public static final String MANA_ICON = "\uE004";
     public static final String RIGHT_CLICK_ICON = "\uE005";
     public static final String SKELETON_ICON = "\uE007";

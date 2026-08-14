@@ -30,6 +30,13 @@
     },
     {
       "type": "bitmap",
+      "file": "wandsofcombat:font/badge_ultimate.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": ["\uE040\uE041\uE042\uE043\uE044\uE045"]
+    },
+    {
+      "type": "bitmap",
       "file": "wandsofcombat:font/mana_icon.png",
       "ascent": 7,
       "height": 8,

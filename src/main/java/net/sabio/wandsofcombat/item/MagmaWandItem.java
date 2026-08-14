@@ -1,7 +1,9 @@
 package net.sabio.wandsofcombat.item;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionHand;
@@ -11,11 +13,15 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ToolMaterial;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.Level;
+import net.sabio.wandsofcombat.mana.ManaCosts;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public class MagmaWandItem extends Item {
     private static final float ATTACK_DAMAGE_BONUS = 5.0f; // total: 9
@@ -85,5 +91,60 @@ public class MagmaWandItem extends Item {
             }
         }
         super.postHurtEnemy(stack, target, attacker);
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay displayComponent, Consumer<Component> tooltip, TooltipFlag flag) {
+        super.appendHoverText(stack, context, displayComponent, tooltip, flag);
+
+        tooltip.accept(Component.empty()
+                .append(TooltipIcons.icon(TooltipIcons.BADGE_PASSIVE))
+                .append(Component.literal(" "))
+                .append(TooltipIcons.title("Magma Shield", ChatFormatting.AQUA)));
+        tooltip.accept(Component.literal("Gain 2 absorption hearts (non-stacking)").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.literal("after 30 seconds of not taking any damage.").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.literal("Once the absorption hearts have been used,").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.literal("it causes all nearby entities within 6").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.literal("block radius to be knocked away from the").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.literal("player. Then, the player will receive").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.literal("multiple positive effects.").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.empty());
+
+        tooltip.accept(Component.empty()
+                .append(TooltipIcons.icon(TooltipIcons.BADGE_COMBO))
+                .append(Component.literal(" "))
+                .append(TooltipIcons.title("Charged-up Fury", ChatFormatting.GOLD))
+                .append(Component.literal(" \uD83D\uDDE15").withStyle(ChatFormatting.WHITE)));
+        tooltip.accept(Component.literal("Launches a fireball that does ❤4 to").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.literal("one enemy.").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.empty());
+
+        tooltip.accept(Component.empty()
+                .append(TooltipIcons.icon(TooltipIcons.BADGE_ABILITY))
+                .append(Component.literal(" "))
+                .append(TooltipIcons.icon(TooltipIcons.RIGHT_CLICK_ICON))
+                .append(Component.literal(" "))
+                .append(TooltipIcons.title("Ablazed Healing", ChatFormatting.RED))
+                .append(Component.literal(" "))
+                .append(TooltipIcons.icon(TooltipIcons.MANA_ICON))
+                .append(Component.literal(String.valueOf(ManaCosts.MAGMA_ABILITY)).withStyle(ChatFormatting.AQUA)));
+        tooltip.accept(Component.literal("Every tick on fire, heal the player").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.literal("by ❤0.05 and extinguishes fire.").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.literal("Lasts for 45 seconds.").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.empty());
+
+        tooltip.accept(Component.empty()
+                .append(TooltipIcons.icon(TooltipIcons.BADGE_ULTIMATE))
+                .append(Component.literal(" "))
+                .append(Component.literal("Crouch").withStyle(ChatFormatting.BOLD, ChatFormatting.UNDERLINE, ChatFormatting.WHITE))
+                .append(Component.literal(" "))
+                .append(TooltipIcons.icon(TooltipIcons.RIGHT_CLICK_ICON))
+                .append(Component.literal(" "))
+                .append(TooltipIcons.title("Fire Ring", ChatFormatting.GRAY))
+                .append(Component.literal(" "))
+                .append(TooltipIcons.icon(TooltipIcons.MANA_ICON))
+                .append(Component.literal(String.valueOf(ManaCosts.MAGMA_ULTIMATE)).withStyle(ChatFormatting.YELLOW)));
+        tooltip.accept(Component.literal("Spawns a ring of fire that moves").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.literal("with you. Lasts for 30 seconds.").withStyle(ChatFormatting.GRAY));
     }
 }
