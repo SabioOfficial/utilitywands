@@ -140,10 +140,10 @@ public class MagmaWandItem extends Item {
                 .append(Component.literal(" "))
                 .append(TooltipIcons.icon(TooltipIcons.RIGHT_CLICK_ICON))
                 .append(Component.literal(" "))
-                .append(TooltipIcons.title("Fire Ring", ChatFormatting.GRAY))
+                .append(TooltipIcons.title("Fire Ring", ChatFormatting.YELLOW))
                 .append(Component.literal(" "))
                 .append(TooltipIcons.icon(TooltipIcons.MANA_ICON))
-                .append(Component.literal(String.valueOf(ManaCosts.MAGMA_ULTIMATE)).withStyle(ChatFormatting.YELLOW)));
+                .append(Component.literal(String.valueOf(ManaCosts.MAGMA_ULTIMATE)).withStyle(ChatFormatting.AQUA)));
         tooltip.accept(Component.literal("Spawns a ring of fire that moves").withStyle(ChatFormatting.GRAY));
         tooltip.accept(Component.literal("with you. Lasts for 30 seconds.").withStyle(ChatFormatting.GRAY));
     }
