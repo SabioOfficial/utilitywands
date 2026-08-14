@@ -1,8 +1,10 @@
 package net.sabio.wandsofcombat.item;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -16,6 +18,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ToolMaterial;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
@@ -24,6 +28,7 @@ import net.sabio.wandsofcombat.mana.ManaCosts;
 import net.sabio.wandsofcombat.mana.ManaManager;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 public class IceWandItem extends Item {
     private static final double LITE_RANGE = 8.0;
@@ -207,5 +212,36 @@ public class IceWandItem extends Item {
             IceWandComboHandler.onHit(player, target);
         }
         super.postHurtEnemy(stack, target, attacker);
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay displayComponent, Consumer<Component> tooltip, TooltipFlag flag) {
+        super.appendHoverText(stack, context, displayComponent, tooltip, flag);
+
+        tooltip.accept(Component.empty()
+                .append(TooltipIcons.icon(TooltipIcons.BADGE_COMBO))
+                .append(Component.literal(" "))
+                .append(TooltipIcons.title("Spiked Ice", ChatFormatting.GOLD))
+                .append(Component.literal(" \uD83D\uDDE16").withStyle(ChatFormatting.WHITE)));
+        tooltip.accept(Component.literal("A powerful building energy releases").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.literal("from your body, doing ❤11 to the enemy").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.literal("if the ice successfully hits them. It has").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.literal("a ~7 block range.").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.empty());
+
+        tooltip.accept(Component.empty()
+                .append(TooltipIcons.icon(TooltipIcons.BADGE_ABILITY))
+                .append(Component.literal(" "))
+                .append(TooltipIcons.icon(TooltipIcons.RIGHT_CLICK_ICON))
+                .append(Component.literal(" "))
+                .append(TooltipIcons.title("Freeze", ChatFormatting.RED))
+                .append(Component.literal(" "))
+                .append(TooltipIcons.icon(TooltipIcons.MANA_ICON))
+                .append(Component.literal(ManaCosts.ICE_WAND_LITE + "-" + ManaCosts.ICE_WAND_FULL).withStyle(ChatFormatting.AQUA)));
+        tooltip.accept(Component.literal("For mobs, this ability has an 8 block radius").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.literal("and gives them Slowness 127 for 4 seconds.").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.literal("For players, this ability has a 12 block").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.literal("radius and gives them Slowness 2 for 4").withStyle(ChatFormatting.GRAY));
+        tooltip.accept(Component.literal("seconds. Both damages the enemies.").withStyle(ChatFormatting.GRAY));
     }
 }
