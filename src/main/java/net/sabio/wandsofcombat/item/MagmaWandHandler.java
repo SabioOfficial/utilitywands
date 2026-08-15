@@ -3,7 +3,6 @@ package net.sabio.wandsofcombat.item;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
@@ -18,7 +17,6 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.sabio.wandsofcombat.mana.ManaCosts;
@@ -31,7 +29,6 @@ public class MagmaWandHandler {
     private static final Map<UUID, Float> passiveAbsorptionGiven = new HashMap<>();
     private static final Map<UUID, Long> abilityEndTimes = new HashMap<>();
     private static final Map<UUID, Long> ultimateEndTimes = new HashMap<>();
-    private static final Map<UUID, Set<BlockPos>> fireRingBlocks = new HashMap<>();
     private static final Set<UUID> wandFireballEntities = new HashSet<>();
     private static final Map<UUID, Long> fireballExpiryTimes = new HashMap<>();
     private static final Map<UUID, Long> absorptionGrantTick = new HashMap<>();
@@ -39,8 +36,6 @@ public class MagmaWandHandler {
     private static final Map<UUID, List<OrbitFireball>> fireballRings = new HashMap<>();
     private static final int NO_DAMAGE_DURATION = 600; // how many ticks you have to not have taken damage for the absorption hearts
     private static final double KNOCKBACK_RADIUS = 6.0; // 6 blocks
-    private static final double FIRE_RING_RADIUS = 4.0; // how far the fire ring extends
-    private static final int GROUND_SCAN_RANGE = 5;
     private static final int RING_FIREBALL_COUNT = 8;
     private static final double RING_RADIUS = 4.5;
     private static final double RING_HEIGHT_OFFSET = 1.1;
@@ -187,8 +182,8 @@ public class MagmaWandHandler {
             if (player.level() instanceof ServerLevel ServerLevel) {
                 for (int i = 0; i < 16; i++) {
                     double angle = (2.0 * Math.PI / 16) * i;
-                    double posX = player.getX() + 1.0 * Math.cos(angle);
-                    double posZ = player.getZ() + 1.0 * Math.sin(angle);
+                    double posX = player.getX() + Math.cos(angle);
+                    double posZ = player.getZ() + Math.sin(angle);
                     ServerLevel.sendParticles(
                             new DustParticleOptions(0xAB421C, 1.8f),
                             posX,
@@ -216,25 +211,6 @@ public class MagmaWandHandler {
         } else {
             absorptionGrantTick.remove(uuid);
         }
-    }
-    private static void buildFireRing(Player player, ServerLevel world) {
-        UUID uuid = player.getUUID();
-        Set<BlockPos> desired = computeRingPositions(player, world);
-        Set<BlockPos> current = fireRingBlocks.getOrDefault(uuid, new HashSet<>());
-        for (BlockPos position : current) {
-            if (!desired.contains(position) && world.getBlockState(position).is(Blocks.FIRE)) {
-                world.removeBlock(position, false);
-            }
-        }
-        for (BlockPos position : desired) {
-            if (!current.contains(position)) {
-                var state = world.getBlockState(position);
-                if (!state.isCollisionShapeFullBlock(world, position)) {
-                    world.setBlock(position, Blocks.FIRE.defaultBlockState(), 3);
-                }
-            }
-        }
-        fireRingBlocks.put(uuid, desired);
     }
     private static void spawnFireballRing(Player player) {
         if (!(player.level() instanceof ServerLevel world)) return;
@@ -292,7 +268,7 @@ public class MagmaWandHandler {
             );
             List<LivingEntity> hit = world.getEntitiesOfClass(LivingEntity.class, hitBox, entity -> entity != player && !entity.isRemoved() && entity.isAlive());
             if (!hit.isEmpty()) {
-                LivingEntity target = hit.get(0);
+                LivingEntity target = hit.getFirst();
                 fireball.used = true;
                 if (fireball.entity != null && fireball.entity.isAlive()) {
                     wandFireballEntities.remove(fireball.entity.getUUID());
@@ -352,12 +328,12 @@ public class MagmaWandHandler {
     public static void initialize() {
         ServerTickEvents.END_SERVER_TICK.register(MagmaWandHandler::onTick);
         ServerLivingEntityEvents.ALLOW_DAMAGE.register(MagmaWandHandler::onDamage);
-        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+        ServerPlayConnectionEvents.JOIN.register((handler, _, _) -> {
             UUID uuid = handler.player.getUUID();
             long joinTick = handler.player.level().getGameTime();
             lastDamageTick.put(uuid, joinTick + 40);
         });
-        ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
+        ServerPlayConnectionEvents.DISCONNECT.register((handler, _) -> {
             UUID uuid = handler.player.getUUID();
             lastDamageTick.remove(uuid);
             passiveAbsorptionGiven.remove(uuid);
@@ -401,75 +377,6 @@ public class MagmaWandHandler {
         world.playSeededSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1.0f, 0.8f, world.getRandom().nextLong());
         world.playSeededSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.FIRE_AMBIENT, SoundSource.PLAYERS, 1.5f, 0.8f, world.getRandom().nextLong());
         spawnFireballRing(player);
-    }
-    private static Set<BlockPos> computeRingPositions(Player player, ServerLevel world) {
-        Set<BlockPos> positions = new HashSet<>();
-        int steps = 36;
-        for (int i = 0; i < steps; i++) {
-            double angle = (2 * Math.PI / steps) * i;
-            double dx = FIRE_RING_RADIUS * Math.cos(angle);
-            double dz = FIRE_RING_RADIUS * Math.sin(angle);
-            int blockX = (int) Math.round(player.getX() + dx);
-            int blockZ = (int) Math.round(player.getZ() + dz);
-            BlockPos ground = findGround(world, blockX, (int) player.getY(), blockZ);
-            if (ground != null) {
-                positions.add(ground.above());
-            }
-        }
-        return positions;
-    }
-    private static void updateFireRing(Player player, ServerLevel world) {
-        buildFireRing(player, world);
-        Set<BlockPos> ring = fireRingBlocks.get(player.getUUID());
-        if (ring != null) {
-            removeSpreadFire(world, ring);
-        }
-    }
-    private static void removeFireRing(Player player, ServerLevel world) {
-        UUID uuid = player.getUUID();
-        Set<BlockPos> ring = fireRingBlocks.get(uuid);
-        if (ring == null) return;
-        for (BlockPos position : ring) {
-            if (world.getBlockState(position).is(Blocks.FIRE)) {
-                world.removeBlock(position, false);
-            }
-        }
-        fireRingBlocks.remove(uuid);
-    }
-    private static void removeSpreadFire(ServerLevel world, Set<BlockPos> ringPositions) {
-        int[] offsets = {-1, 0, 1};
-        for (BlockPos pos : ringPositions) {
-            for (int dx : offsets) {
-                for (int dy : offsets) {
-                    for (int dz : offsets) {
-                        if (dx == 0 && dy == 0 && dz == 0) continue;
-                        BlockPos neighbor = pos.offset(dx, dy, dz);
-                        if (!ringPositions.contains(neighbor) && world.getBlockState(neighbor).is(Blocks.FIRE)) {
-                            world.removeBlock(neighbor, false);
-                        }
-                    }
-                }
-            }
-        }
-    }
-    private static BlockPos findGround(ServerLevel world, int x, int startY, int z) {
-        for (int y = startY; y <= startY + GROUND_SCAN_RANGE; y++) {
-            BlockPos pos = new BlockPos(x, y, z);
-            BlockPos above = pos.above();
-            if (world.getBlockState(pos).isCollisionShapeFullBlock(world, pos)
-                    && !world.getBlockState(above).isCollisionShapeFullBlock(world, above)) {
-                return pos;
-            }
-        }
-        for (int y = startY - 1; y >= startY - GROUND_SCAN_RANGE; y--) {
-            BlockPos pos = new BlockPos(x, y, z);
-            BlockPos above = pos.above();
-            if (world.getBlockState(pos).isCollisionShapeFullBlock(world, pos)
-                    && !world.getBlockState(above).isCollisionShapeFullBlock(world, above)) {
-                return pos;
-            }
-        }
-        return null;
     }
     private static void onTick(MinecraftServer server) {
         for (ServerLevel world : server.getAllLevels()) {
