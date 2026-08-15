@@ -7,6 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
+import net.minecraft.network.protocol.game.ClientboundTeleportEntityPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -17,7 +18,6 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -36,10 +36,26 @@ public class MagmaWandHandler {
     private static final Map<UUID, Long> fireballExpiryTimes = new HashMap<>();
     private static final Map<UUID, Long> absorptionGrantTick = new HashMap<>();
     private static final Map<UUID, Long> absorptionGrantedAt = new HashMap<>();
+    private static final Map<UUID, List<OrbitFireball>> fireballRings = new HashMap<>();
     private static final int NO_DAMAGE_DURATION = 600; // how many ticks you have to not have taken damage for the absorption hearts
     private static final double KNOCKBACK_RADIUS = 6.0; // 6 blocks
     private static final double FIRE_RING_RADIUS = 4.0; // how far the fire ring extends
     private static final int GROUND_SCAN_RANGE = 5;
+    private static final int RING_FIREBALL_COUNT = 8;
+    private static final double RING_RADIUS = 4.5;
+    private static final double RING_HEIGHT_OFFSET = 1.1;
+    private static final double RING_ROTATION_SPEED = 0.035;
+    private static final double RING_HIT_RADIUS = 0.6;
+    private static final float RING_FIREBALL_DAMAGE = 8.0f;
+
+    private static class OrbitFireball {
+        double angle;
+        boolean used = false;
+        MagmaWandFireballEntity entity;
+        OrbitFireball(double angle) {
+            this.angle = angle;
+        }
+    }
 
     private static void triggerPassiveKnockback(Player player) {
         if (!(player.level() instanceof ServerLevel world)) return;
@@ -220,6 +236,119 @@ public class MagmaWandHandler {
         }
         fireRingBlocks.put(uuid, desired);
     }
+    private static void spawnFireballRing(Player player) {
+        if (!(player.level() instanceof ServerLevel world)) return;
+        UUID uuid = player.getUUID();
+        List<OrbitFireball> ring = new ArrayList<>();
+        Vec3 center = player.position().add(0, RING_HEIGHT_OFFSET, 0);
+        for (int i = 0; i < RING_FIREBALL_COUNT; i++) {
+            double angle = (2 * Math.PI / RING_FIREBALL_COUNT) * i;
+            OrbitFireball orbit = new OrbitFireball(angle);
+            double posX = center.x + RING_RADIUS * Math.cos(angle);
+            double posZ = center.z + RING_RADIUS * Math.sin(angle);
+            MagmaWandFireballEntity fireballEntity = new MagmaWandFireballEntity(world, player, Vec3.ZERO);
+            fireballEntity.setPos(posX, center.y, posZ);
+            fireballEntity.setOrbiting(true);
+            wandFireballEntities.add(fireballEntity.getUUID());
+            world.addFreshEntity(fireballEntity);
+            orbit.entity = fireballEntity;
+            ring.add(orbit);
+        }
+        fireballRings.put(uuid, ring);
+    }
+    private static void updateFireballRing(Player player, ServerLevel world, long currentTick) {
+        UUID uuid = player.getUUID();
+        List<OrbitFireball> ring = fireballRings.get(uuid);
+        if (ring == null) return;
+        Vec3 center = player.position().add(0, RING_HEIGHT_OFFSET, 0);
+        for (OrbitFireball fireball : ring) {
+            if (fireball.used) continue;
+            fireball.angle -= RING_ROTATION_SPEED;
+            double posX = center.x + RING_RADIUS * Math.cos(fireball.angle);
+            double posY = center.y;
+            double posZ = center.z + RING_RADIUS * Math.sin(fireball.angle);
+            if (fireball.entity != null && fireball.entity.isAlive()) {
+                fireball.entity.setPos(posX, posY, posZ);
+                fireball.entity.setDeltaMovement(Vec3.ZERO);
+                fireball.entity.yRotO = fireball.entity.getYRot();
+                fireball.entity.setYRot((float) (Math.toDegrees(fireball.angle) + 90.0));
+                world.getChunkSource().sendToTrackingPlayers(fireball.entity, new ClientboundTeleportEntityPacket(
+                        fireball.entity.getId(),
+                        net.minecraft.world.entity.PositionMoveRotation.of(fireball.entity),
+                        java.util.Collections.emptySet(),
+                        false
+                ));
+            }
+            if (currentTick % 2 == 0) {
+                world.sendParticles(ParticleTypes.FLAME, posX, posY, posZ, 1, 0.03, 0.03, 0.03, 0);
+            }
+            AABB hitBox = new AABB(
+                    posX - RING_HIT_RADIUS,
+                    posY - RING_HIT_RADIUS,
+                    posZ - RING_HIT_RADIUS,
+                    posX + RING_HIT_RADIUS,
+                    posY + RING_HIT_RADIUS,
+                    posZ + RING_HIT_RADIUS
+            );
+            List<LivingEntity> hit = world.getEntitiesOfClass(LivingEntity.class, hitBox, entity -> entity != player && !entity.isRemoved() && entity.isAlive());
+            if (!hit.isEmpty()) {
+                LivingEntity target = hit.get(0);
+                fireball.used = true;
+                if (fireball.entity != null && fireball.entity.isAlive()) {
+                    wandFireballEntities.remove(fireball.entity.getUUID());
+                    fireball.entity.discard();
+                }
+                target.hurtServer(world, world.damageSources().indirectMagic(player, player), RING_FIREBALL_DAMAGE);
+                target.igniteForSeconds(5);
+                Vec3 knockback = target.position().subtract(center);
+                if (knockback.horizontalDistance() < 0.01) knockback = new Vec3(1, 0, 0);
+                knockback = knockback.normalize();
+                target.knockback(1.2, -knockback.x, -knockback.z, world.damageSources().magic(), 0);
+                Vec3 currentMotion = target.getDeltaMovement();
+                target.setDeltaMovement(currentMotion.x, 0.35, currentMotion.z);
+                target.hurtMarked = true;
+                if (target instanceof ServerPlayer serverTarget) {
+                    serverTarget.connection.send(new ClientboundSetEntityMotionPacket(serverTarget));
+                }
+                world.sendParticles(ParticleTypes.LAVA, posX, posY, posZ, 10, 0.3, 0.3, 0.3, 0.2);
+                world.sendParticles(ParticleTypes.LARGE_SMOKE, posX, posY, posZ, 6, 0.2, 0.3, 0.2, 0.02);
+                world.playSeededSound(null, posX, posY, posZ, SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 1.0f, 1.1f, world.getRandom().nextLong());
+            }
+        }
+    }
+    private static void expireFireballRing(Player player, ServerLevel world) {
+        UUID uuid = player.getUUID();
+        List<OrbitFireball> ring = fireballRings.remove(uuid);
+        if (ring == null) return;
+        Vec3 center = player.position().add(0, RING_HEIGHT_OFFSET, 0);
+        for (OrbitFireball fireball : ring) {
+            if (fireball.used) continue;
+            Vec3 direction = new Vec3(Math.cos(fireball.angle), 0, Math.sin(fireball.angle)).normalize();
+            if (fireball.entity != null && fireball.entity.isAlive()) {
+                fireball.entity.launchOutward(direction, 1.2);
+                fireballExpiryTimes.put(fireball.entity.getUUID(), world.getGameTime() + 120);
+            } else {
+                MagmaWandFireballEntity fireballEntity = new MagmaWandFireballEntity(world, player, direction);
+                double posX = center.x + RING_RADIUS * Math.cos(fireball.angle);
+                double posZ = center.z + RING_RADIUS * Math.sin(fireball.angle);
+                fireballEntity.setPos(posX, center.y, posZ);
+                wandFireballEntities.add(fireballEntity.getUUID());
+                world.addFreshEntity(fireballEntity);
+                fireballExpiryTimes.put(fireballEntity.getUUID(), world.getGameTime() + 120);
+            }
+        }
+        world.playSeededSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 1.2f, 0.8f, world.getRandom().nextLong());
+    }
+    private static void discardRing(UUID uuid) {
+        List<OrbitFireball> ring = fireballRings.remove(uuid);
+        if (ring == null) return;
+        for (OrbitFireball fireball : ring) {
+            if (fireball.entity != null && fireball.entity.isAlive()) {
+                wandFireballEntities.remove(fireball.entity.getUUID());
+                fireball.entity.discard();
+            }
+        }
+    }
     public static void initialize() {
         ServerTickEvents.END_SERVER_TICK.register(MagmaWandHandler::onTick);
         ServerLivingEntityEvents.ALLOW_DAMAGE.register(MagmaWandHandler::onDamage);
@@ -234,10 +363,7 @@ public class MagmaWandHandler {
             passiveAbsorptionGiven.remove(uuid);
             abilityEndTimes.remove(uuid);
             ultimateEndTimes.remove(uuid);
-            if (handler.player.level() instanceof ServerLevel serverLevel) {
-                removeFireRing(handler.player, serverLevel);
-            }
-            fireRingBlocks.remove(uuid);
+            discardRing(uuid);
             MagmaWandItem.hitCounters.remove(uuid);
             absorptionGrantTick.remove(uuid);
             absorptionGrantedAt.remove(uuid);
@@ -274,7 +400,7 @@ public class MagmaWandHandler {
         ultimateEndTimes.put(uuid, world.getGameTime() + MagmaWandItem.ULTIMATE_DURATION);
         world.playSeededSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1.0f, 0.8f, world.getRandom().nextLong());
         world.playSeededSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.FIRE_AMBIENT, SoundSource.PLAYERS, 1.5f, 0.8f, world.getRandom().nextLong());
-        buildFireRing(player, world);
+        spawnFireballRing(player);
     }
     private static Set<BlockPos> computeRingPositions(Player player, ServerLevel world) {
         Set<BlockPos> positions = new HashSet<>();
@@ -413,9 +539,9 @@ public class MagmaWandHandler {
                 if (ultimateEnd != null) {
                     if (currentTick >= ultimateEnd) {
                         ultimateEndTimes.remove(uuid);
-                        removeFireRing(player, world);
-                    } else if (currentTick % 5 == 0) {
-                        updateFireRing(player, world);
+                        expireFireballRing(player, world);
+                    } else {
+                        updateFireballRing(player, world, currentTick);
                     }
                 }
             }

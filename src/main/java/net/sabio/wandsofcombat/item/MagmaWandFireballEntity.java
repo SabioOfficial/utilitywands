@@ -13,6 +13,8 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 
 public class MagmaWandFireballEntity extends Fireball {
+    private boolean orbiting = false;
+
     public MagmaWandFireballEntity(Level world, LivingEntity owner, Vec3 direction) {
         super(EntityTypes.FIREBALL, owner, direction, world);
     }
@@ -21,8 +23,42 @@ public class MagmaWandFireballEntity extends Fireball {
         super(type, world);
     }
 
+    public void setOrbiting(boolean orbiting) {
+        this.orbiting = orbiting;
+        this.setNoGravity(true);
+    }
+
+    public void launchOutward(Vec3 direction, double power) {
+        this.orbiting = false;
+        this.setNoGravity(false);
+        try {
+            var xf = Fireball.class.getDeclaredField("xPower");
+            var yf = Fireball.class.getDeclaredField("yPower");
+            var zf = Fireball.class.getDeclaredField("zPower");
+            xf.setAccessible(true);
+            yf.setAccessible(true);
+            zf.setAccessible(true);
+            xf.setDouble(this, direction.x * power);
+            yf.setDouble(this, direction.y * power);
+            zf.setDouble(this, direction.z * power);
+        } catch (ReflectiveOperationException e) {
+            this.setDeltaMovement(direction.scale(power));
+        }
+    }
+
+    @Override
+    public void tick() {
+        if (orbiting) {
+            this.setDeltaMovement(Vec3.ZERO);
+            this.tickCount++;
+            return;
+        }
+        super.tick();
+    }
+
     @Override
     protected void onHitEntity(EntityHitResult hitResult) {
+        if (orbiting) return;
         super.onHitEntity(hitResult);
         if (level() instanceof ServerLevel ServerLevel) {
             hitResult.getEntity().hurtServer(
@@ -69,6 +105,7 @@ public class MagmaWandFireballEntity extends Fireball {
 
     @Override
     protected void onHitBlock(BlockHitResult hitResult) {
+        if (orbiting) return;
         super.onHitBlock(hitResult);
         this.discard();
     }
