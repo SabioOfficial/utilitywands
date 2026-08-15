@@ -17,6 +17,7 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.Level;
 import net.sabio.wandsofcombat.mana.ManaCosts;
+import net.sabio.wandsofcombat.mana.ManaManager;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -42,6 +43,10 @@ public class MagmaWandItem extends Item {
     }
     @Override
     public InteractionResult use(Level world, Player player, InteractionHand hand) {
+        int cost = player.isCrouching() ? ManaCosts.MAGMA_ULTIMATE : ManaCosts.MAGMA_ABILITY;
+        if (!ManaManager.hasEnough(player, cost)) {
+            return InteractionResult.FAIL;
+        }
         if (hand == InteractionHand.OFF_HAND && player.getMainHandItem().getItem() instanceof MagmaWandItem) {
             return InteractionResult.PASS;
         }
