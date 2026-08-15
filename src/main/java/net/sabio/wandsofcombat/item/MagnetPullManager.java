@@ -143,7 +143,7 @@ public class MagnetPullManager {
             Vec3 away = new Vec3(entity.getX() - playerPosition.x, 0, entity.getZ() - playerPosition.z);
             if (away.horizontalDistance() < 0.01) away = new Vec3(1, 0, 0);
             away = away.normalize();
-            entity.hurtServer(world, world.damageSources().magic(), damage);
+            entity.hurtServer(world, world.damageSources().indirectMagic(player, player), damage);
             entity.setDeltaMovement(away.x * 2.0 * multiplier, 0.4, away.z * 2.0 * multiplier);
             entity.hurtMarked = true;
             if (entity instanceof ServerPlayer serverPlayer) {

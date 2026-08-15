@@ -43,12 +43,12 @@ public class ElectricWandItem extends Item {
         ));
     }
 
-    public static void strikeLightningOn(Entity target, ServerLevel world) {
+    public static void strikeLightningOn(Entity target, ServerLevel world, Player attacker) {
         LightningBolt lightning = new LightningBolt(EntityTypes.LIGHTNING_BOLT, world);
         lightning.snapTo(target.getX(), target.getY(), target.getZ());
         lightning.setVisualOnly(true);
         world.addFreshEntity(lightning);
-        target.hurtServer(world, world.damageSources().lightningBolt(), 5.0f);
+        target.hurtServer(world, world.damageSources().indirectMagic(attacker, attacker), 5.0f);
     }
 
     @Override
@@ -58,7 +58,7 @@ public class ElectricWandItem extends Item {
             int hits = hitCounters.getOrDefault(uuid, 0) + 1;
             if (hits >= 3) {
                 hitCounters.put(uuid, 0);
-                strikeLightningOn(target, (ServerLevel) attacker.level());
+                strikeLightningOn(target, (ServerLevel) attacker.level(), player);
             } else {
                 hitCounters.put(uuid, hits);
             }

@@ -122,7 +122,7 @@ public class IceWandComboHandler {
             List<LivingEntity> hit = world.getEntitiesOfClass(LivingEntity.class, hitAABB, entity -> entity != attacker && !entity.isRemoved() && entity.isAlive() && !damagedEntities.contains(entity.getUUID()));
             for (LivingEntity entity : hit) {
                 damagedEntities.add(entity.getUUID());
-                entity.hurtServer(world, world.damageSources().magic(), DAMAGE);
+                entity.hurtServer(world, world.damageSources().indirectMagic(attacker, attacker), DAMAGE);
                 entity.addEffect(new MobEffectInstance(
                         MobEffects.SLOWNESS,
                         SLOWNESS_DURATION,

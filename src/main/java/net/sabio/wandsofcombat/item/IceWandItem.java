@@ -14,6 +14,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -60,6 +61,10 @@ public class IceWandItem extends Item {
             ));
             mob.setDeltaMovement(Vec3.ZERO);
             mob.hurtMarked = true;
+            mob.setLastHurtByPlayer(player, mob.tickCount);
+            if (mob instanceof Mob livingMob) {
+                livingMob.setTarget(player);
+            }
 
             if (world instanceof ServerLevel ServerLevel) {
                 ServerLevel.playSeededSound(null, mob.getX(), mob.getY(), mob.getZ(), SoundEvents.POWDER_SNOW_HIT, SoundSource.PLAYERS, 0.8f, 1.0f, ServerLevel.getRandom().nextLong());

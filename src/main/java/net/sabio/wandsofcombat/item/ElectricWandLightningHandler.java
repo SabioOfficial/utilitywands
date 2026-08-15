@@ -22,6 +22,7 @@ public class ElectricWandLightningHandler {
     private static final Map<UUID, UUID> summonedSkeletons = new HashMap<>();
     private static final Map<UUID, Long> skeletonDespawnTimes = new HashMap<>();
     private static final Map<UUID, Long> stunnedEntities = new HashMap<>();
+    private static final Map<UUID, UUID> stunnedByPlayer = new HashMap<>();
     private static final Map<UUID, Long> skeletonSpawnTimes = new HashMap<>();
     private static final Map<UUID, LivingEntity> skeletonTargets = new HashMap<>();
     private static final Map<UUID, Long> skeletonNextAttackTick = new HashMap<>();
@@ -103,7 +104,7 @@ public class ElectricWandLightningHandler {
             if (strikesFired >= totalStrikes) return true;
             for (LivingEntity target : targets) {
                 if (target.isRemoved()) continue;
-                ElectricWandItem.strikeLightningOn(target, world);
+                ElectricWandItem.strikeLightningOn(target, world, player);
                 target.addEffect(new MobEffectInstance(
                         MobEffects.SLOWNESS,
                         STUN_DURATION,
@@ -119,6 +120,7 @@ public class ElectricWandLightningHandler {
                     mob.setTarget(null);
                 }
                 stunnedEntities.put(target.getUUID(), currentTick + STUN_DURATION);
+                stunnedByPlayer.put(target.getUUID(), player.getUUID());
             }
             strikesFired++;
             tickTimer = INTERVAL;
@@ -191,6 +193,15 @@ public class ElectricWandLightningHandler {
                     if (!(entity instanceof Mob mob)) continue;
                     if (expiredStuns.contains(mob.getUUID())) {
                         mob.setNoAi(false);
+                        mob.setAggressive(true);
+                        UUID attackerUuid = stunnedByPlayer.remove(mob.getUUID());
+                        if (attackerUuid != null) {
+                            Entity attackerEntity = world.getPlayerByUUID(attackerUuid);
+                            if (attackerEntity instanceof Player attackerPlayer) {
+                                mob.setTarget(attackerPlayer);
+                                mob.setLastHurtByPlayer(attackerPlayer, mob.tickCount);
+                            }
+                        }
                     }
                 }
             }
