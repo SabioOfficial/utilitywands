@@ -24,8 +24,8 @@ import java.util.function.Consumer;
 
 public class PhantomWandItem extends Item {
     public static final int ABILITY_DURATION = 120; // 6 seconds
-    private static final float ATTACK_DAMAGE_BONUS = 2.0f; // 6 total attack damage
-    private static final float ATTACK_SPEED = -1.5f;
+    private static final float ATTACK_DAMAGE_BONUS = 1.0f; // 5 total attack damage
+    private static final float ATTACK_SPEED = -2.0f;
     public static final Set<UUID> phantomPlayers = new HashSet<>();
     public static final Set<UUID> pullingPlayers = new HashSet<>();
     public PhantomWandItem(Properties settings) {
