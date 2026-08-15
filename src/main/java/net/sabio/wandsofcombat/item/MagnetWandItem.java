@@ -19,8 +19,8 @@ import net.sabio.wandsofcombat.mana.ManaManager;
 import java.util.function.Consumer;
 
 public class MagnetWandItem extends Item {
-    private static final float ATTACK_DAMAGE_BONUS = 3.0f;
-    private static final float ATTACK_SPEED = -2.4f;
+    private static final float ATTACK_DAMAGE_BONUS = 2.0f;
+    private static final float ATTACK_SPEED = -2.7f;
     private static final double ABILITY_PULL_RANGE = 12.0;
     private static final double REPEL_RANGE = 8.0;
     private static final float REPEL_DAMAGE = 6.0f;
