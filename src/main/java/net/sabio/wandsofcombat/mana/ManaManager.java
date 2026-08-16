@@ -1,5 +1,6 @@
 package net.sabio.wandsofcombat.mana;
 
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -39,6 +40,12 @@ public class ManaManager {
             ManaState.get(server).setPoints(uuid, manaPoints.getOrDefault(uuid, MAX_MANA_POINTS));
             manaPoints.remove(uuid);
             nextRegenTick.remove(uuid);
+        });
+        ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
+            ManaState state = ManaState.get(server);
+            for (Map.Entry<UUID, Integer> entry : manaPoints.entrySet()) {
+                state.setPoints(entry.getKey(), entry.getValue());
+            }
         });
     }
 
