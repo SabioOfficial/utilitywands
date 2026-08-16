@@ -5,6 +5,7 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.player.Player;
 import net.sabio.wandsofcombat.effect.ModEffects;
 import net.sabio.wandsofcombat.network.ManaSyncPacket;
@@ -64,6 +65,10 @@ public class ManaManager {
             return true;
         }
         return manaPoints.getOrDefault(player.getUUID(), MAX_MANA_POINTS) >= costPoints;
+    }
+
+    public static void playInsufficientManaSound(Player player) {
+        player.playSound(SoundEvents.VILLAGER_NO, 1.0f, 1.0f);
     }
 
     public static boolean tryConsume(Player player, int costPoints) {

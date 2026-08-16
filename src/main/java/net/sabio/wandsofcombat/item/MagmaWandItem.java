@@ -45,6 +45,7 @@ public class MagmaWandItem extends Item {
     public InteractionResult use(Level world, Player player, InteractionHand hand) {
         int cost = player.isCrouching() ? ManaCosts.MAGMA_ULTIMATE : ManaCosts.MAGMA_ABILITY;
         if (!ManaManager.hasEnough(player, cost)) {
+            ManaManager.playInsufficientManaSound(player);
             return InteractionResult.FAIL;
         }
         if (hand == InteractionHand.OFF_HAND && player.getMainHandItem().getItem() instanceof MagmaWandItem) {

@@ -69,6 +69,7 @@ public class ElectricWandItem extends Item {
     @Override
     public InteractionResult use(Level world, Player player, InteractionHand hand) {
         if (!ManaManager.hasEnough(player, ManaCosts.ELECTRIC_WAND)) {
+            ManaManager.playInsufficientManaSound(player);
             return InteractionResult.FAIL;
         }
         if (!world.isClientSide()) {

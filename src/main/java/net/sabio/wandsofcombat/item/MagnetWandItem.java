@@ -46,7 +46,10 @@ public class MagnetWandItem extends Item {
     @Override
     public InteractionResult use(Level world, Player player, InteractionHand hand) {
         if (hand == InteractionHand.OFF_HAND) return InteractionResult.PASS;
-        if (!ManaManager.hasEnough(player, ManaCosts.MAGNET_WAND)) return InteractionResult.FAIL;
+        if (!ManaManager.hasEnough(player, ManaCosts.MAGNET_WAND)) {
+            ManaManager.playInsufficientManaSound(player);
+            return InteractionResult.FAIL;
+        }
         if (!world.isClientSide()) {
             if (!ManaManager.tryConsume(player, ManaCosts.MAGNET_WAND)) return InteractionResult.FAIL;
             if (MagnetPullManager.isRepelMode(player)) {

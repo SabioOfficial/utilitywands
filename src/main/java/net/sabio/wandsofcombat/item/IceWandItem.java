@@ -194,6 +194,7 @@ public class IceWandItem extends Item {
     @Override
     public InteractionResult use(Level world, Player player, InteractionHand hand) {
         if (!ManaManager.hasEnough(player, ManaCosts.ICE_WAND_LITE)) {
+            ManaManager.playInsufficientManaSound(player);
             return InteractionResult.FAIL;
         }
         if (!world.isClientSide()) {

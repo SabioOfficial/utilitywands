@@ -40,6 +40,7 @@ public class PhantomWandItem extends Item {
     @Override
     public InteractionResult use(Level world, Player player, InteractionHand hand) {
         if (!ManaManager.hasEnough(player, ManaCosts.PHANTOM_WAND)) {
+            ManaManager.playInsufficientManaSound(player);
             return InteractionResult.FAIL;
         }
         if (!world.isClientSide()) {
