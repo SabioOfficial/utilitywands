@@ -113,10 +113,18 @@ public final class ManaHudRenderer {
     }
 
     private static int healthBarRowCount(Player player) {
-        float health = player.getHealth();
+        int maxHealth = Math.round(player.getMaxHealth());
         float absorption = player.getAbsorptionAmount();
-        int total = Math.round(health + absorption);
-        int rows = (total + HEALTH_PER_HEART_ROW - 1) / HEALTH_PER_HEART_ROW;
+
+        int baseRows = Math.max(1, (maxHealth + HEALTH_PER_HEART_ROW - 1) / HEALTH_PER_HEART_ROW);
+        int usedInLastRow = maxHealth - (baseRows - 1) * HEALTH_PER_HEART_ROW;
+        int remainingInLastRow = HEALTH_PER_HEART_ROW - usedInLastRow;
+
+        int rows = baseRows;
+        if (absorption > remainingInLastRow) {
+            int overflow = Math.round(absorption) - remainingInLastRow;
+            rows += (overflow + HEALTH_PER_HEART_ROW - 1) / HEALTH_PER_HEART_ROW;
+        }
         return Math.max(1, rows);
     }
 }
